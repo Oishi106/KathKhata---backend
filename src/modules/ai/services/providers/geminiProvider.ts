@@ -1,6 +1,5 @@
 import { env } from "../../../../config/env";
 import { AIProvider, AIProviderContext } from "../aiProvider.interface";
-
 import { logger } from "../../../../utils/logger";
 
 /**
@@ -18,24 +17,38 @@ export class GeminiAIProvider implements AIProvider {
   ): Promise<string> {
     if (!env.GEMINI_API_KEY) {
       logger.warn("GEMINI_API_KEY not set — falling back to generic response");
-      return "AI provider not configured. Please set GEMINI_API_KEY in the environment.";
+      return "AI প্রোভাইডার এখনো কনফিগার করা হয়নি। অনুগ্রহ করে .env ফাইলে GEMINI_API_KEY বসান।";
     }
 
-    const systemContext = context?.businessSummary
-      ? `Business context: ${context.businessSummary}\n\n`
-      : "";
+    const language = context?.language === "en" ? "English" : "Bengali (বাংলা)";
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${env.GEMINI_API_KEY}`;
+    const systemInstruction = [
+      "You are KathKhata AI, a friendly business assistant for a sawmill (কাঠখাতা/করাতকল) owner in Bangladesh.",
+      "Always reply in " + language + ", in short, clear, practical sentences.",
+      "Use the business data below to ground your answers in real numbers whenever relevant.",
+      context?.businessSummary ? `Business snapshot: ${context.businessSummary}` : ""
+    ]
+      .filter(Boolean)
+      .join(" ");
 
-    const contents = [
-      ...history.map((h) => ({ role: h.role === "assistant" ? "model" : "user", parts: [{ text: h.content }] })),
-      { role: "user", parts: [{ text: systemContext + prompt }] }
-    ];
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${env.GEMINI_API_KEY}`;
+
+    // `history` already includes the current user turn as its last item
+    // (pushed by ai.service.ts before calling the provider), so we send
+    // history as-is and do NOT append `prompt` again to avoid duplication.
+    const contents = history.map((h) => ({
+      role: h.role === "assistant" ? "model" : "user",
+      parts: [{ text: h.content }]
+    }));
 
     const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents })
+      body: JSON.stringify({
+        contents,
+        systemInstruction: { parts: [{ text: systemInstruction }] },
+        generationConfig: { temperature: 0.6, maxOutputTokens: 512 }
+      })
     });
 
     if (!response.ok) {
@@ -47,6 +60,9 @@ export class GeminiAIProvider implements AIProvider {
       candidates?: { content?: { parts?: { text?: string }[] } }[];
     };
 
-    return data.candidates?.[0]?.content?.parts?.[0]?.text ?? "Sorry, I couldn't generate a response.";
+    return (
+      data.candidates?.[0]?.content?.parts?.[0]?.text ??
+      "দুঃখিত, এই মুহূর্তে উত্তর তৈরি করা যায়নি। আবার চেষ্টা করুন।"
+    );
   }
 }

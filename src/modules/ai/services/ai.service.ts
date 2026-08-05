@@ -66,16 +66,25 @@ export const AIService = {
     return { conversationId: convo._id, reply };
   },
 
-  async quickInsights(owner: string) {
+ async quickInsights(owner: string) {
+    const user = await User.findById(owner);
+    const language = user?.language ?? "bn";
     const dash = await DashboardService.summary(owner);
     const insights: string[] = [];
 
-    if (dash.todayProfit < 0) insights.push("Today's expenses exceeded revenue — review spending.");
-    if (dash.lowStockAlerts > 0) insights.push(`${dash.lowStockAlerts} wood item(s) are low or out of stock.`);
-    if (dash.pendingOrders > 5) insights.push(`You have ${dash.pendingOrders} pending cutting orders — consider prioritizing.`);
-    if (dash.monthlyProfit > 0) insights.push(`Healthy monthly profit of ${dash.monthlyProfit} so far.`);
-
-    if (insights.length === 0) insights.push("Everything looks stable today. No urgent issues detected.");
+    if (language === "bn") {
+      if (dash.todayProfit < 0) insights.push("আজকের খরচ আয়ের চেয়ে বেশি হয়ে গেছে — খরচ পর্যালোচনা করুন।");
+      if (dash.lowStockAlerts > 0) insights.push(`${dash.lowStockAlerts}টি কাঠের আইটেম কম বা শেষ মজুদে আছে।`);
+      if (dash.pendingOrders > 5) insights.push(`আপনার ${dash.pendingOrders}টি অর্ডার এখনো চলমান — অগ্রাধিকার দিন।`);
+      if (dash.monthlyProfit > 0) insights.push(`এই মাসে এখন পর্যন্ত ${dash.monthlyProfit} টাকা লাভ হয়েছে — ভালো চলছে।`);
+      if (insights.length === 0) insights.push("সবকিছু স্থিতিশীল আছে। এখন কোনো জরুরি সমস্যা নেই।");
+    } else {
+      if (dash.todayProfit < 0) insights.push("Today's expenses exceeded revenue — review spending.");
+      if (dash.lowStockAlerts > 0) insights.push(`${dash.lowStockAlerts} wood item(s) are low or out of stock.`);
+      if (dash.pendingOrders > 5) insights.push(`You have ${dash.pendingOrders} pending cutting orders — consider prioritizing.`);
+      if (dash.monthlyProfit > 0) insights.push(`Healthy monthly profit of ${dash.monthlyProfit} so far.`);
+      if (insights.length === 0) insights.push("Everything looks stable today. No urgent issues detected.");
+    }
 
     return insights;
   },
