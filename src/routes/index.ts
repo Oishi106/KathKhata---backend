@@ -8,6 +8,7 @@ import saleRoutes from "../modules/sales/routes/sale.routes";
 import productCostRoutes from "../modules/product-cost/routes/productCost.routes";
 import dashboardRoutes from "../modules/dashboard/routes/dashboard.routes";
 import aiRoutes from "../modules/ai/routes/ai.routes";
+import notificationRoutes from "../modules/notification/routes/notification.routes";
 
 const router = Router();
 
@@ -20,5 +21,6 @@ router.use("/sales", saleRoutes);
 router.use("/product-cost", productCostRoutes);
 router.use("/dashboard", dashboardRoutes);
 router.use("/ai", aiRoutes);
+router.use("/notifications", notificationRoutes);
 
 export default router;
