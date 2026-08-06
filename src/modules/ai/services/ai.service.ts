@@ -33,6 +33,22 @@ export const AIService = {
     return convo;
   },
 
+  async renameConversation(owner: string, id: string, title: string) {
+    const convo = await AIConversation.findOneAndUpdate(
+      { _id: id, owner },
+      { title: title.trim().slice(0, 60) },
+      { new: true }
+    ).select("title updatedAt createdAt");
+    if (!convo) throw ApiError.notFound("Conversation not found");
+    return convo;
+  },
+
+  async deleteConversation(owner: string, id: string) {
+    const convo = await AIConversation.findOneAndDelete({ _id: id, owner });
+    if (!convo) throw ApiError.notFound("Conversation not found");
+    return { deleted: true };
+  },
+
   async ask(owner: string, conversationId: string | undefined, message: string) {
     const user = await User.findById(owner);
     const language = user?.language ?? "bn";
@@ -66,7 +82,7 @@ export const AIService = {
     return { conversationId: convo._id, reply };
   },
 
- async quickInsights(owner: string) {
+  async quickInsights(owner: string) {
     const user = await User.findById(owner);
     const language = user?.language ?? "bn";
     const dash = await DashboardService.summary(owner);

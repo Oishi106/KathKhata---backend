@@ -13,6 +13,16 @@ export const getConversation = asyncHandler(async (req: Request, res: Response) 
   return sendSuccess(res, 200, "Conversation fetched", data);
 });
 
+export const renameConversation = asyncHandler(async (req: Request, res: Response) => {
+  const data = await AIService.renameConversation(req.user!.userId, req.params.id, req.body.title);
+  return sendSuccess(res, 200, "Conversation renamed", data);
+});
+
+export const deleteConversation = asyncHandler(async (req: Request, res: Response) => {
+  await AIService.deleteConversation(req.user!.userId, req.params.id);
+  return sendSuccess(res, 200, "Conversation deleted");
+});
+
 export const ask = asyncHandler(async (req: Request, res: Response) => {
   const { conversationId, message } = req.body;
   const result = await AIService.ask(req.user!.userId, conversationId, message);

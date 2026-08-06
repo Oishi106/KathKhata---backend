@@ -31,8 +31,9 @@ export class GeminiAIProvider implements AIProvider {
       .filter(Boolean)
       .join(" ");
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${env.GEMINI_API_KEY}`;
-
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${env.GEMINI_API_KEY}`;
+    
+    
     // `history` already includes the current user turn as its last item
     // (pushed by ai.service.ts before calling the provider), so we send
     // history as-is and do NOT append `prompt` again to avoid duplication.
@@ -47,7 +48,10 @@ export class GeminiAIProvider implements AIProvider {
       body: JSON.stringify({
         contents,
         systemInstruction: { parts: [{ text: systemInstruction }] },
-        generationConfig: { temperature: 0.6, maxOutputTokens: 512 }
+        generationConfig: {
+          temperature: 0.6,
+          maxOutputTokens: 2048
+        }
       })
     });
 
