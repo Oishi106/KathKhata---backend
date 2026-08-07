@@ -9,6 +9,9 @@ import productCostRoutes from "../modules/product-cost/routes/productCost.routes
 import dashboardRoutes from "../modules/dashboard/routes/dashboard.routes";
 import aiRoutes from "../modules/ai/routes/ai.routes";
 import notificationRoutes from "../modules/notification/routes/notification.routes";
+import supplierRoutes from "../modules/supplier/routes/supplier.routes";
+import purchaseRoutes from "../modules/purchase/routes/purchase.routes";
+import customerRoutes from "../modules/customer/routes/customer.routes";
 
 const router = Router();
 
@@ -22,5 +25,8 @@ router.use("/product-cost", productCostRoutes);
 router.use("/dashboard", dashboardRoutes);
 router.use("/ai", aiRoutes);
 router.use("/notifications", notificationRoutes);
+router.use("/suppliers", supplierRoutes);
+router.use("/purchases", purchaseRoutes);
+router.use("/customers", customerRoutes);
 
 export default router;
