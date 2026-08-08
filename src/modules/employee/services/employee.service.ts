@@ -7,10 +7,11 @@ import type {
   AddPaymentInput
 } from "../validators/employee.validator";
 
-function sameDay(a: Date, b: Date) {
-  return (
-    a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
-  );
+// input string বা Date যেকোনোটাই হতে পারে বলে সবসময় নতুন Date বানিয়ে নিরাপদে তুলনা করা হচ্ছে
+function sameDay(a: Date | string, b: Date | string) {
+  const da = new Date(a);
+  const db = new Date(b);
+  return da.getFullYear() === db.getFullYear() && da.getMonth() === db.getMonth() && da.getDate() === db.getDate();
 }
 
 export class EmployeeService {
@@ -67,24 +68,22 @@ export class EmployeeService {
     return employee;
   }
 
-  /**
-   * নির্দিষ্ট তারিখের হাজিরা রেকর্ড করে — একই তারিখে আগে থেকে এন্ট্রি থাকলে সেটা আপডেট হয়ে যায়।
-   */
   static async markAttendance(ownerId: string, id: string, input: MarkAttendanceInput) {
     const employee = await Employee.findOne({ _id: id, owner: ownerId });
     if (!employee) throw ApiError.notFound("কর্মচারী পাওয়া যায়নি");
 
-    const existingIndex = employee.attendanceHistory.findIndex((r) => sameDay(r.date, input.date));
+    const attendanceDate = new Date(input.date);
+    const existingIndex = employee.attendanceHistory.findIndex((r) => sameDay(r.date, attendanceDate));
 
     if (existingIndex >= 0) {
       employee.attendanceHistory[existingIndex] = {
-        date: input.date,
+        date: attendanceDate,
         status: input.status,
         overtimeHours: input.overtimeHours ?? 0
       };
     } else {
       employee.attendanceHistory.push({
-        date: input.date,
+        date: attendanceDate,
         status: input.status,
         overtimeHours: input.overtimeHours ?? 0
       });
@@ -94,15 +93,16 @@ export class EmployeeService {
     return employee;
   }
 
-  /**
-   * advance/bonus/deduction রেকর্ড করে। advance হলে advanceBalance বাড়ে।
-   */
-  static async addPayment(ownerId: string, id: string, input: AddPaymentInput) {
+static async addPayment(ownerId: string, id: string, input: AddPaymentInput) {
     const employee = await Employee.findOne({ _id: id, owner: ownerId });
     if (!employee) throw ApiError.notFound("কর্মচারী পাওয়া যায়নি");
 
+    if (input.type === "advance_repayment" && input.amount > employee.advanceBalance) {
+      throw ApiError.badRequest("শোধের পরিমাণ বকেয়া অগ্রিমের চেয়ে বেশি হতে পারবে না");
+    }
+
     employee.paymentHistory.push({
-      date: input.date ?? new Date(),
+      date: input.date ? new Date(input.date) : new Date(),
       type: input.type,
       amount: input.amount,
       note: input.note
@@ -110,6 +110,8 @@ export class EmployeeService {
 
     if (input.type === "advance") {
       employee.advanceBalance += input.amount;
+    } else if (input.type === "advance_repayment") {
+      employee.advanceBalance -= input.amount;
     }
 
     await employee.save();

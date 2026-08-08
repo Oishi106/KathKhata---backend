@@ -8,7 +8,7 @@ export interface IAttendanceRecord {
 
 export interface IPaymentRecord {
   date: Date;
-  type: "advance" | "bonus" | "salary" | "deduction";
+  type: "advance" | "advance_repayment" | "bonus" | "salary" | "deduction";
   amount: number;
   note?: string;
 }
@@ -44,7 +44,7 @@ const attendanceRecordSchema = new Schema<IAttendanceRecord>(
 const paymentRecordSchema = new Schema<IPaymentRecord>(
   {
     date: { type: Date, required: true, default: Date.now },
-    type: { type: String, enum: ["advance", "bonus", "salary", "deduction"], required: true },
+    type: { type: String, enum: ["advance", "advance_repayment", "bonus", "salary", "deduction"], required: true },
     amount: { type: Number, required: true, min: 0 },
     note: { type: String, trim: true }
   },

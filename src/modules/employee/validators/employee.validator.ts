@@ -44,7 +44,9 @@ export const addPaymentSchema = z.object({
     id: z.string().min(1)
   }),
   body: z.object({
-    type: z.enum(["advance", "bonus", "deduction"], { required_error: "লেনদেনের ধরন নির্বাচন করুন" }),
+    type: z.enum(["advance", "advance_repayment", "bonus", "deduction"], {
+      required_error: "লেনদেনের ধরন নির্বাচন করুন"
+    }),
     amount: z.coerce.number().positive("পরিমাণ অবশ্যই ০-এর বেশি হতে হবে"),
     date: z.coerce.date().optional(),
     note: z.string().trim().optional()

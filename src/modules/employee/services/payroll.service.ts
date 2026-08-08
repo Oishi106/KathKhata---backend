@@ -23,8 +23,9 @@ export class PayrollService {
       year: input.year
     });
 
-    if (payroll && payroll.status === "paid") {
-      throw ApiError.badRequest("এই মাসের পে-রোল ইতিমধ্যে পরিশোধ করা হয়ে গেছে, আর পরিবর্তন করা যাবে না");
+if (payroll && payroll.status === "paid") {
+      // ইতিমধ্যে পরিশোধিত হলে আবার হিসাব না করে শুধু পুরনো রেকর্ডটাই ফেরত দেওয়া হচ্ছে (দেখার জন্য)
+      return payroll;
     }
 
     // ওই মাসের attendance রেকর্ড ফিল্টার করা
@@ -53,18 +54,19 @@ export class PayrollService {
     const overtimeRate = employee.overtimeRatePerHour ?? perDayRate / 8;
     const overtimePay = overtimeHours * overtimeRate;
 
-    // ওই মাসের bonus/deduction পেমেন্ট হিসাব করা
+// ওই মাসের bonus/deduction পেমেন্ট হিসাব করা
     const monthPayments = employee.paymentHistory.filter(
       (p) => p.date.getMonth() + 1 === input.month && p.date.getFullYear() === input.year
     );
     const bonusTotal = monthPayments.filter((p) => p.type === "bonus").reduce((s, p) => s + p.amount, 0);
     const deductionTotal = monthPayments.filter((p) => p.type === "deduction").reduce((s, p) => s + p.amount, 0);
 
-    // বকেয়া অগ্রিম থেকে যতটা কাটা সম্ভব (নেগেটিভ হতে দেওয়া হবে না)
-    const grossBeforeAdvance = basePay + overtimePay + bonusTotal - deductionTotal;
-    const advanceDeducted = Math.min(employee.advanceBalance, Math.max(0, grossBeforeAdvance));
+    // অগ্রিম এখানে কাটা হয় না — এটা আলাদা, দীর্ঘমেয়াদী পাওনা হিসেবে থেকে যায়
+    // যতক্ষণ না owner ম্যানুয়ালি "অগ্রিম শোধ" রেকর্ড করে
+    const advanceDeducted = 0;
+    const calculatedTotal = basePay + overtimePay + bonusTotal - deductionTotal;
 
-    const calculatedTotal = grossBeforeAdvance - advanceDeducted;
+
     const manualAdjustment = payroll?.manualAdjustment ?? 0;
     const netPayable = calculatedTotal + manualAdjustment;
 
@@ -146,13 +148,12 @@ export class PayrollService {
     const employee = await Employee.findOne({ _id: payroll.employee, owner: ownerId });
     if (!employee) throw ApiError.notFound("কর্মচারী পাওয়া যায়নি");
 
-    employee.paymentHistory.push({
+employee.paymentHistory.push({
       date: new Date(),
       type: "salary",
       amount: payroll.netPayable,
       note: `${payroll.month}/${payroll.year} মাসের বেতন`
     });
-    employee.advanceBalance = Math.max(0, employee.advanceBalance - payroll.advanceDeducted);
     await employee.save();
 
     payroll.status = "paid";
