@@ -13,6 +13,7 @@ import supplierRoutes from "../modules/supplier/routes/supplier.routes";
 import purchaseRoutes from "../modules/purchase/routes/purchase.routes";
 import customerRoutes from "../modules/customer/routes/customer.routes";
 import measurementRoutes from "../modules/wood-measurement/routes/measurement.routes";
+import machineRoutes from "../modules/machine/routes/machine.routes";
 
 const router = Router();
 
@@ -30,5 +31,6 @@ router.use("/suppliers", supplierRoutes);
 router.use("/purchases", purchaseRoutes);
 router.use("/customers", customerRoutes);
 router.use("/wood-measurement", measurementRoutes);
+router.use("/machines", machineRoutes);
 
 export default router;
