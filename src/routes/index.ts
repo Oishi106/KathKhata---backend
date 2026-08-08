@@ -16,6 +16,7 @@ import measurementRoutes from "../modules/wood-measurement/routes/measurement.ro
 import machineRoutes from "../modules/machine/routes/machine.routes";
 import employeeRoutes from "../modules/employee/routes/employee.routes";
 import payrollRoutes from "../modules/employee/routes/payroll.routes";
+import settingsRoutes from "../modules/settings/routes/settings.routes";
 
 const router = Router();
 
@@ -36,5 +37,6 @@ router.use("/wood-measurement", measurementRoutes);
 router.use("/machines", machineRoutes);
 router.use("/employees", employeeRoutes);
 router.use("/payroll", payrollRoutes);
+router.use("/settings", settingsRoutes);
 
 export default router;
