@@ -12,6 +12,7 @@ import notificationRoutes from "../modules/notification/routes/notification.rout
 import supplierRoutes from "../modules/supplier/routes/supplier.routes";
 import purchaseRoutes from "../modules/purchase/routes/purchase.routes";
 import customerRoutes from "../modules/customer/routes/customer.routes";
+import measurementRoutes from "../modules/wood-measurement/routes/measurement.routes";
 
 const router = Router();
 
@@ -28,5 +29,6 @@ router.use("/notifications", notificationRoutes);
 router.use("/suppliers", supplierRoutes);
 router.use("/purchases", purchaseRoutes);
 router.use("/customers", customerRoutes);
+router.use("/wood-measurement", measurementRoutes);
 
 export default router;
