@@ -14,6 +14,8 @@ import purchaseRoutes from "../modules/purchase/routes/purchase.routes";
 import customerRoutes from "../modules/customer/routes/customer.routes";
 import measurementRoutes from "../modules/wood-measurement/routes/measurement.routes";
 import machineRoutes from "../modules/machine/routes/machine.routes";
+import employeeRoutes from "../modules/employee/routes/employee.routes";
+import payrollRoutes from "../modules/employee/routes/payroll.routes";
 
 const router = Router();
 
@@ -32,5 +34,7 @@ router.use("/purchases", purchaseRoutes);
 router.use("/customers", customerRoutes);
 router.use("/wood-measurement", measurementRoutes);
 router.use("/machines", machineRoutes);
+router.use("/employees", employeeRoutes);
+router.use("/payroll", payrollRoutes);
 
 export default router;
