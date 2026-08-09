@@ -35,7 +35,7 @@ router.use("/purchases", purchaseRoutes);
 router.use("/customers", customerRoutes);
 router.use("/wood-measurement", measurementRoutes);
 router.use("/machines", machineRoutes);
-router.use("/employees", employeeRoutes);
+router.use("/employees", employeeRoutes);               
 router.use("/payroll", payrollRoutes);
 router.use("/settings", settingsRoutes);
 
