@@ -18,4 +18,4 @@ router.get("/quick-insights", Controller.quickInsights);
 router.get("/suggested-questions", Controller.suggestedQuestions);
 router.post("/voice-parse", validate(voiceParseSchema), voiceParse);
 
-export default router;    
+export default router;             
