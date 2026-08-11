@@ -10,7 +10,7 @@ const router = Router();
 router.use(authenticate);
 
 router.get("/conversations", Controller.listConversations);
-router.get("/conversations/:id", Controller.getConversation);
+router.get("/conversations/:id", Controller.getConversation);            
 router.patch("/conversations/:id", Controller.renameConversation);
 router.delete("/conversations/:id", Controller.deleteConversation);
 router.post("/ask", validate(askSchema), Controller.ask);
