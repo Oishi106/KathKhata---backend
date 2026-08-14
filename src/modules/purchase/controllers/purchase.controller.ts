@@ -61,7 +61,7 @@ export const downloadInvoice = asyncHandler(async (req: Request, res: Response) 
 
   doc.y = 110; // লোগোর জায়গা ছেড়ে শিরোনাম শুরু
 
-  doc.font("bold").fontSize(20).text("ক্রয় চালান / Purchase Invoice", { align: "center" });
+  doc.font("bold").fontSize(20).text("ক্রয় চালান / Purchase Invoice", { align: "center" });            
   doc.font("body").moveDown();
   doc.fontSize(10).text(`চালান নম্বর: ${purchase.invoiceNumber ?? purchase._id}`);
   doc.text(`তারিখ: ${new Date(purchase.purchaseDate).toLocaleDateString("en-GB")}`);
