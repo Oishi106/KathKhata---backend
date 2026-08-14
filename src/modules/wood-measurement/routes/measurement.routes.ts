@@ -25,6 +25,9 @@ router.delete("/groups/:groupId/items/:itemId", Controller.removeItem);
 router.post("/groups/:groupId/close", validate(closeMeasurementSchema), Controller.closeGroup);
 router.post("/groups/:groupId/reopen", Controller.reopenGroup);
 
+// Voice/text parsing
+router.post("/voice-parse", Controller.parseVoice);
+
 // History & single record
 router.get("/history", Controller.history);
 router.get("/:id", Controller.getById);
