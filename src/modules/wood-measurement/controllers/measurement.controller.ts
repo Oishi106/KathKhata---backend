@@ -3,8 +3,10 @@ import path from "path";
 import PDFDocument from "pdfkit";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import { sendSuccess } from "../../../utils/ApiResponse";
+import { ApiError } from "../../../utils/ApiError";
 import { MeasurementService } from "../services/measurement.service";
 import { User } from "../../user/models/user.model";
+import { parseVoiceTranscript } from "../utils/voiceParser";
 
 // ---- Rules ----
 export const listRules = asyncHandler(async (req: Request, res: Response) => {
@@ -115,7 +117,7 @@ export const downloadSlip = asyncHandler(async (req: Request, res: Response) => 
   group.items.forEach((item: any, i: number) => {
     if (item.mode === "round_log") {
       doc.text(
-        `${i + 1}) গোল কাঠ — বেয়ার ${item.girth} ${item.girthUnit === "inch" ? "ইঞ্চি" : "ফুট"}, আড়ে ${item.length} ফুট, ${item.quantity}টি → ${item.cft.toFixed(2)} সিএফটি`
+        `${i + 1}) গোল কাঠ — পরিধি ${item.girth} ${item.girthUnit === "inch" ? "ইঞ্চি" : "ফুট"}, দৈর্ঘ্য ${item.length} ফুট, ${item.quantity}টি → ${item.cft.toFixed(2)} সিএফটি`
       );
     } else {
       doc.text(
@@ -137,4 +139,14 @@ export const downloadSlip = asyncHandler(async (req: Request, res: Response) => 
   doc.fillColor("#888").fontSize(9).text("এটি একটি স্বয়ংক্রিয়ভাবে তৈরি মাপের স্লিপ — কাঠখাতা", { align: "center" });
 
   doc.end();
+});
+
+// ---- Voice/text parsing (AI's ONLY job: extract structured data, never calculate) ----
+export const parseVoice = asyncHandler(async (req: Request, res: Response) => {
+  const { transcript } = req.body as { transcript: string };
+  if (!transcript || !transcript.trim()) {
+    throw new ApiError(400, "Transcript is required");
+  }
+  const result = parseVoiceTranscript(transcript);
+  return sendSuccess(res, 200, "Transcript parsed", result);
 });
