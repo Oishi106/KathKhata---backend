@@ -54,7 +54,7 @@ export const downloadInvoice = asyncHandler(async (req: Request, res: Response) 
 
   // লোগো হেডারে বসানো (ফাইল না থাকলে চুপচাপ স্কিপ করবে, PDF ভাঙবে না)
   try {
-    doc.image(LOGO_PATH, 50, 45, { width: 50 });
+    doc.image(LOGO_PATH, 50, 45, { width: 50 });   
   } catch {
     // লোগো ফাইল না পাওয়া গেলে উপেক্ষা করা হচ্ছে
   }
