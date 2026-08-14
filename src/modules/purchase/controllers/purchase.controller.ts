@@ -33,6 +33,7 @@ export const remove = asyncHandler(async (req: Request, res: Response) => {
 
 const FONT_REGULAR = path.join(__dirname, "../../../assets/fonts/HindSiliguri-Regular.ttf");
 const FONT_BOLD = path.join(__dirname, "../../../assets/fonts/HindSiliguri-Bold.ttf");
+const LOGO_PATH = path.join(__dirname, "../../../assets/logo.png");
 
 export const downloadInvoice = asyncHandler(async (req: Request, res: Response) => {
   const purchase = await PurchaseService.getPurchaseById(req.user!.userId, req.params.id);
@@ -50,6 +51,15 @@ export const downloadInvoice = asyncHandler(async (req: Request, res: Response) 
   doc.font("body");
 
   doc.pipe(res);
+
+  // লোগো হেডারে বসানো (ফাইল না থাকলে চুপচাপ স্কিপ করবে, PDF ভাঙবে না)
+  try {
+    doc.image(LOGO_PATH, 50, 45, { width: 50 });
+  } catch {
+    // লোগো ফাইল না পাওয়া গেলে উপেক্ষা করা হচ্ছে
+  }
+
+  doc.y = 110; // লোগোর জায়গা ছেড়ে শিরোনাম শুরু
 
   doc.font("bold").fontSize(20).text("ক্রয় চালান / Purchase Invoice", { align: "center" });
   doc.font("body").moveDown();
