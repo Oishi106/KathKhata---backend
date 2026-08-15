@@ -8,7 +8,7 @@ export const calculateSchema = z.object({
     electricity: z.number().nonnegative(),
     polish: z.number().nonnegative(),
     packaging: z.number().nonnegative(),
-    transport: z.number().nonnegative(),
+    transport: z.number().nonnegative(),   
     desiredMarginPercent: z.number().min(0).max(90).optional()
   })
 });
