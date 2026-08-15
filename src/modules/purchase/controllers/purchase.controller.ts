@@ -64,7 +64,7 @@ export const downloadInvoice = asyncHandler(async (req: Request, res: Response) 
   doc.font("bold").fontSize(20).text("ক্রয় চালান / Purchase Invoice", { align: "center" });            
   doc.font("body").moveDown();
   doc.fontSize(10).text(`চালান নম্বর: ${purchase.invoiceNumber ?? purchase._id}`);
-  doc.text(`তারিখ: ${new Date(purchase.purchaseDate).toLocaleDateString("en-GB")}`);        
+  doc.text(`তারিখ: ${new Date(purchase.purchaseDate).toLocaleDateString("en-GB")}`);                      
   doc.moveDown();
 
   doc.font("bold").fontSize(12).text("সরবরাহকারীর তথ্য", { underline: true });
