@@ -52,19 +52,23 @@ export const downloadInvoice = asyncHandler(async (req: Request, res: Response) 
 
   doc.pipe(res);
 
-  // লোগো হেডারে বসানো (ফাইল না থাকলে চুপচাপ স্কিপ করবে, PDF ভাঙবে না)
+  // লোগো হেডারে মাঝখানে বসানো (ফাইল না থাকলে চুপচাপ স্কিপ করবে, PDF ভাঙবে না)
+  const logoWidth = 60;
+  const pageWidth = doc.page.width;
+  const logoX = (pageWidth - logoWidth) / 2;
+
   try {
-    doc.image(LOGO_PATH, 50, 45, { width: 50 });   
+    doc.image(LOGO_PATH, logoX, 40, { width: logoWidth });
   } catch {
     // লোগো ফাইল না পাওয়া গেলে উপেক্ষা করা হচ্ছে
   }
 
   doc.y = 110; // লোগোর জায়গা ছেড়ে শিরোনাম শুরু
 
-  doc.font("bold").fontSize(20).text("ক্রয় চালান / Purchase Invoice", { align: "center" });            
+  doc.font("bold").fontSize(20).text("ক্রয় চালান / Purchase Invoice", { align: "center" });
   doc.font("body").moveDown();
   doc.fontSize(10).text(`চালান নম্বর: ${purchase.invoiceNumber ?? purchase._id}`);
-  doc.text(`তারিখ: ${new Date(purchase.purchaseDate).toLocaleDateString("en-GB")}`);                      
+  doc.text(`তারিখ: ${new Date(purchase.purchaseDate).toLocaleDateString("en-GB")}`);
   doc.moveDown();
 
   doc.font("bold").fontSize(12).text("সরবরাহকারীর তথ্য", { underline: true });
