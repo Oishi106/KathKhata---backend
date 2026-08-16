@@ -25,6 +25,10 @@ router.delete("/groups/:groupId/items/:itemId", Controller.removeItem);
 router.post("/groups/:groupId/close", validate(closeMeasurementSchema), Controller.closeGroup);
 router.post("/groups/:groupId/reopen", Controller.reopenGroup);
 
+// Daily book
+router.get("/daily-book", Controller.dailyBook);
+router.get("/daily-book/pdf", Controller.downloadDailyBook);
+
 // Voice/text parsing
 router.post("/voice-parse", Controller.parseVoice);
 
