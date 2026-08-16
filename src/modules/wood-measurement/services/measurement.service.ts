@@ -195,7 +195,22 @@ export const MeasurementService = {
 
     return { items, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   },
+  async dailyBook(owner: string, dateStr: string) {
+    const start = new Date(dateStr);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(dateStr);
+    end.setHours(23, 59, 59, 999);
 
+    const records = await Measurement.find({
+      owner,
+      createdAt: { $gte: start, $lte: end }
+    }).sort({ createdAt: 1 });
+
+    const grandTotalCFT = records.reduce((s, r) => s + r.totalCFT, 0);
+    const grandTotalPrice = records.reduce((s, r) => s + r.totalPrice, 0);
+
+    return { date: dateStr, records, grandTotalCFT, grandTotalPrice };
+  },
   async getById(owner: string, id: string) {
     const group = await Measurement.findOne({ _id: id, owner });
     if (!group) throw ApiError.notFound("Measurement not found");
