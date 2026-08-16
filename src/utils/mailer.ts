@@ -114,3 +114,33 @@ export const sendOtpEmail = async (to: string, otp: string) => {
     logger.error(`Failed to send OTP email to ${to}: ${(err as Error).message}`);
   }
 };
+
+export const sendPasswordResetEmail = async (to: string, code: string) => {
+  if (!env.SMTP_USER || !env.SMTP_PASS) {
+    logger.warn(`SMTP not configured — password reset code for ${to} is ${code} (dev fallback, check console)`);
+    return;
+  }
+
+  const body = `
+    <p style="color: #402a18; font-size: 15px; margin: 0 0 8px;">আপনার পাসওয়ার্ড রিসেট কোড (Password reset code):</p>
+    <div style="background: #f7f3ea; border-radius: 12px; padding: 20px; text-align: center; margin: 16px 0;">
+      <span style="font-size: 36px; font-weight: 800; letter-spacing: 10px; color: #2c8f4e;">${code}</span>
+    </div>
+    <p style="color: #a89878; font-size: 13px; margin: 0;">এই কোডটি ১৫ মিনিটের জন্য বৈধ। This code is valid for 15 minutes.</p>
+    <p style="color: #c4b89a; font-size: 12px; margin: 16px 0 0;">
+      আপনি যদি পাসওয়ার্ড রিসেট অনুরোধ না করে থাকেন, এই ইমেইলটি উপেক্ষা করুন — আপনার অ্যাকাউন্ট নিরাপদ আছে।
+    </p>
+  `;
+
+  try {
+    await transporter.sendMail({
+      from: env.MAIL_FROM || `কাঠখাতা এআই <${env.SMTP_USER}>`,
+      to,
+      subject: "আপনার পাসওয়ার্ড রিসেট কোড / Your KathKhata AI password reset code",
+      html: emailWrapper(body)
+    });
+    logger.info(`Password reset email sent to ${to}`);
+  } catch (err) {
+    logger.error(`Failed to send password reset email to ${to}: ${(err as Error).message}`);
+  }
+};

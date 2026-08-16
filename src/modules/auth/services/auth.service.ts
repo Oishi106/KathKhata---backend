@@ -2,7 +2,7 @@ import crypto from "crypto";
 import { User } from "../../user/models/user.model";
 import { ApiError } from "../../../utils/ApiError";
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../../../utils/jwt";
-import { sendOtpEmail } from "../../../utils/mailer";
+import { sendOtpEmail, sendPasswordResetEmail } from "../../../utils/mailer";
 
 const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -97,18 +97,24 @@ export const AuthService = {
     await user.save();
   },
 
+  /**
+   * ৬-ডিজিটের সহজ কোড জেনারেট করে (registration OTP-এর মতোই), ইমেইলে পাঠায়।
+   * নিরাপত্তার জন্য কোডটা hash করে সেভ হয়, এবং API response-এ কখনো ফেরত যায় না —
+   * শুধু ইমেইলের মাধ্যমেই ইউজার এটা পাবে।
+   */
   async forgotPassword(phone: string) {
     const user = await User.findOne({ phone });
     if (!user) throw ApiError.notFound("No account found with this phone number");
 
-    const resetToken = crypto.randomBytes(32).toString("hex");
-    user.passwordResetToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+    const resetCode = generateOtp(); // ৬ ডিজিট, registration OTP-এর মতোই — মোবাইলে সহজে টাইপযোগ্য
+    user.passwordResetToken = crypto.createHash("sha256").update(resetCode).digest("hex");
     user.passwordResetExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
     await user.save();
 
-    await sendOtpEmail(user.email!, resetToken);
+    await sendPasswordResetEmail(user.email!, resetCode);
 
-    return { resetToken };
+    // ⚠️ কোনো token/code এখানে ফেরত দেওয়া হচ্ছে না — শুধু ইমেইলের মাধ্যমেই পাঠানো হয়
+    return { sentTo: user.email };
   },
 
   async resetPassword(phone: string, token: string, newPassword: string) {
@@ -119,7 +125,7 @@ export const AuthService = {
       passwordResetExpiresAt: { $gt: new Date() }
     }).select("+passwordResetToken +passwordResetExpiresAt");
 
-    if (!user) throw ApiError.badRequest("Invalid or expired reset token");
+    if (!user) throw ApiError.badRequest("Invalid or expired reset code");
 
     user.password = newPassword;
     user.passwordResetToken = undefined;
