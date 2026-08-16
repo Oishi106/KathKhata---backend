@@ -140,7 +140,56 @@ export const downloadSlip = asyncHandler(async (req: Request, res: Response) => 
 
   doc.end();
 });
+export const dailyBook = asyncHandler(async (req: Request, res: Response) => {
+  const date = (req.query.date as string) || new Date().toISOString().slice(0, 10);
+  const data = await MeasurementService.dailyBook(req.user!.userId, date);
+  return sendSuccess(res, 200, "Daily book fetched", data);
+});
 
+export const downloadDailyBook = asyncHandler(async (req: Request, res: Response) => {
+  const date = (req.query.date as string) || new Date().toISOString().slice(0, 10);
+  const { records, grandTotalCFT, grandTotalPrice } = await MeasurementService.dailyBook(req.user!.userId, date);
+  const user = await User.findById(req.user!.userId);
+  const businessName = user?.businessName || "কাঠখাতা";
+
+  const doc = new PDFDocument({ margin: 50 });
+  doc.registerFont("body", FONT_REGULAR);
+  doc.registerFont("bold", FONT_BOLD);
+  doc.font("body");
+
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", `attachment; filename=daily-book-${date}.pdf`);
+  doc.pipe(res);
+
+  doc.font("bold").fontSize(18).fillColor("#2c8f4e").text(businessName);
+  doc.font("body").fontSize(10).fillColor("#555").text(`দৈনিক মাপের বই — ${date}`);
+  doc.moveDown(1);
+
+  records.forEach((group: any, i: number) => {
+    doc.font("bold").fontSize(13).fillColor("#402a18").text(`${i + 1}. ${group.customerName}`);
+    doc.font("body").fontSize(9).fillColor("#888").text(`${group.slipNumber} · ${group.status === "closed" ? "সম্পন্ন" : "চলমান"}`);
+    doc.fontSize(10).fillColor("#000");
+    group.items.forEach((item: any, idx: number) => {
+      const line =
+        item.mode === "round_log"
+          ? `   ${idx + 1}) পরিধি ${item.girth}${item.girthUnit === "inch" ? "in" : "ft"}, দৈর্ঘ্য ${item.length}ft, ${item.quantity}টি → ${item.cft.toFixed(2)} সিএফটি`
+          : `   ${idx + 1}) ${item.length}×${item.width}×${item.thickness}in, ${item.quantity}টি → ${item.cft.toFixed(2)} সিএফটি`;
+      doc.text(line);
+    });
+    doc.font("bold").fontSize(10).text(`   মোট: ${group.totalCFT.toFixed(2)} সিএফটি — ৳${group.totalPrice.toFixed(2)}`);
+    doc.moveDown(0.8);
+  });
+
+  doc.moveDown(1);
+  doc.font("bold").fontSize(14).fillColor("#2c8f4e").text(`সর্বমোট সিএফটি: ${grandTotalCFT.toFixed(2)}`);
+  doc.text(`সর্বমোট মূল্য: ৳${grandTotalPrice.toFixed(2)}`);
+
+  if (records.length === 0) {
+    doc.font("body").fontSize(11).fillColor("#888").text("এই দিনে কোনো হিসাব পাওয়া যায়নি।");
+  }
+
+  doc.end();
+});
 // ---- Voice/text parsing (AI's ONLY job: extract structured data, never calculate) ----
 export const parseVoice = asyncHandler(async (req: Request, res: Response) => {
   const { transcript } = req.body as { transcript: string };
