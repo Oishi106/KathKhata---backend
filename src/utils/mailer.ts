@@ -12,7 +12,7 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// লোগো পাবলিক ফোল্ডারে হোস্ট করা থাকলে সেই URL এখানে বসবে (Step 3-এ ঠিক করা হবে)
+// লোগো পাবলিক ফোল্ডারে হোস্ট করা থাকলে সেই URL এখানে বসবে (deploy করার পর আসল URL বসাতে হবে)
 const LOGO_URL = "https://kathkhata.ai/logo.png";
 
 const socialLinks = {
@@ -29,7 +29,13 @@ function emailWrapper(bodyHtml: string): string {
 
       <!-- Header -->
       <div style="background: linear-gradient(135deg, #2c8f4e 0%, #1f6e3a 100%); padding: 32px 24px; text-align: center;">
-        <img src="${LOGO_URL}" alt="কাঠখাতা এআই" width="64" height="64" style="border-radius: 50%; background: #fff; padding: 6px;" />
+        <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+          <tr>
+            <td style="background: #ffffff; border-radius: 50%; width: 64px; height: 64px; text-align: center; vertical-align: middle;">
+              <img src="${LOGO_URL}" alt="কাঠখাতা" width="48" height="48" style="display: block; margin: 8px auto; border-radius: 50%;" />
+            </td>
+          </tr>
+        </table>
         <h1 style="color: #ffffff; font-size: 22px; margin: 12px 0 0; font-weight: 700;">কাঠখাতা এআই</h1>
         <p style="color: #d8f0e0; font-size: 13px; margin: 4px 0 0;">KathKhata AI — Your Sawmill's Digital Ledger</p>
       </div>
@@ -41,18 +47,37 @@ function emailWrapper(bodyHtml: string): string {
 
       <!-- Footer -->
       <div style="background: #faf7f0; padding: 24px 28px; border-top: 1px solid #f0e5d0;">
-        <p style="color: #8a7a5c; font-size: 12px; margin: 0 0 12px; text-align: center;">
-          Developer of কাঠখাতা — Mahmuda Afroz Oishi
+        <p style="color: #8a7a5c; font-size: 12px; margin: 0 0 16px; text-align: center;">
+          Developer of কাঠখাতা — <strong style="color: #402a18;">Mahmuda Afroz Oishi</strong>
         </p>
-        <div style="text-align: center;">
-          <a href="${socialLinks.facebook}" style="display: inline-block; margin: 0 8px; text-decoration: none; color: #2c8f4e; font-size: 12px; font-weight: 600;">Facebook</a>
-          <span style="color: #d8cdb0;">•</span>
-          <a href="${socialLinks.linkedin}" style="display: inline-block; margin: 0 8px; text-decoration: none; color: #2c8f4e; font-size: 12px; font-weight: 600;">LinkedIn</a>
-          <span style="color: #d8cdb0;">•</span>
-          <a href="${socialLinks.github}" style="display: inline-block; margin: 0 8px; text-decoration: none; color: #2c8f4e; font-size: 12px; font-weight: 600;">GitHub</a>
-          <span style="color: #d8cdb0;">•</span>
-          <a href="${socialLinks.portfolio}" style="display: inline-block; margin: 0 8px; text-decoration: none; color: #2c8f4e; font-size: 12px; font-weight: 600;">Portfolio</a>
-        </div>
+        <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+          <tr>
+            <td style="padding: 0 10px; text-align: center;">
+              <a href="${socialLinks.facebook}" style="text-decoration: none;">
+                <img src="https://www.google.com/s2/favicons?domain=facebook.com&sz=64" width="22" height="22" alt="Facebook" style="display: block; margin: 0 auto 4px; border-radius: 4px;" />
+                <span style="color: #6b5d42; font-size: 11px; font-weight: 500;">Facebook</span>
+              </a>
+            </td>
+            <td style="padding: 0 10px; text-align: center;">
+              <a href="${socialLinks.linkedin}" style="text-decoration: none;">
+                <img src="https://www.google.com/s2/favicons?domain=linkedin.com&sz=64" width="22" height="22" alt="LinkedIn" style="display: block; margin: 0 auto 4px; border-radius: 4px;" />
+                <span style="color: #6b5d42; font-size: 11px; font-weight: 500;">LinkedIn</span>
+              </a>
+            </td>
+            <td style="padding: 0 10px; text-align: center;">
+              <a href="${socialLinks.github}" style="text-decoration: none;">
+                <img src="https://www.google.com/s2/favicons?domain=github.com&sz=64" width="22" height="22" alt="GitHub" style="display: block; margin: 0 auto 4px; border-radius: 4px;" />
+                <span style="color: #6b5d42; font-size: 11px; font-weight: 500;">GitHub</span>
+              </a>
+            </td>
+            <td style="padding: 0 10px; text-align: center;">
+              <a href="${socialLinks.portfolio}" style="text-decoration: none;">
+                <img src="https://www.google.com/s2/favicons?domain=vercel.app&sz=64" width="22" height="22" alt="Portfolio" style="display: block; margin: 0 auto 4px; border-radius: 4px;" />
+                <span style="color: #6b5d42; font-size: 11px; font-weight: 500;">Portfolio</span>
+              </a>
+            </td>
+          </tr>
+        </table>
       </div>
 
     </div>
