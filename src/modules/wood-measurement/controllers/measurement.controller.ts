@@ -190,6 +190,66 @@ export const downloadDailyBook = asyncHandler(async (req: Request, res: Response
 
   doc.end();
 });
+
+export const bulkPdf = asyncHandler(async (req: Request, res: Response) => {
+  const { ids } = req.body as { ids: string[] };
+  if (!ids || ids.length === 0) {
+    throw new ApiError(400, "No measurements selected");
+  }
+
+  const user = await User.findById(req.user!.userId);
+  const businessName = user?.businessName || "কাঠখাতা";
+
+  const doc = new PDFDocument({ margin: 50 });
+  doc.registerFont("body", FONT_REGULAR);
+  doc.registerFont("bold", FONT_BOLD);
+  doc.font("body");
+
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", `attachment; filename=bulk-slips-${Date.now()}.pdf`);
+  doc.pipe(res);
+
+  for (let i = 0; i < ids.length; i++) {
+    const group: any = await MeasurementService.getById(req.user!.userId, ids[i]);
+    if (i > 0) doc.addPage();
+
+    doc.font("bold").fontSize(18).fillColor("#2c8f4e").text(businessName);
+    doc.font("body").fontSize(10).fillColor("#555").text("কাঠের মাপের স্লিপ");
+    doc.moveDown(1);
+
+    doc.fontSize(11).fillColor("#000");
+    doc.text(`স্লিপ নম্বর: ${group.slipNumber}`);
+    doc.text(`তারিখ: ${new Date(group.createdAt).toLocaleDateString("bn-BD")}`);
+    doc.text(`গ্রাহক: ${group.customerName}`);
+    if (group.operator) doc.text(`অপারেটর: ${group.operator}`);
+    doc.moveDown(1);
+
+    doc.font("bold").fontSize(12).fillColor("#2c8f4e").text("মাপের বিবরণ");
+    doc.font("body").fontSize(10).fillColor("#000");
+    group.items.forEach((item: any, idx: number) => {
+      if (item.mode === "round_log") {
+        doc.text(
+          `${idx + 1}) গোল কাঠ — পরিধি ${item.girth} ${item.girthUnit === "inch" ? "ইঞ্চি" : "ফুট"}, দৈর্ঘ্য ${item.length} ফুট, ${item.quantity}টি → ${item.cft.toFixed(2)} সিএফটি`
+        );
+      } else {
+        doc.text(
+          `${idx + 1}) সাইজ কাট — ${item.length}×${item.width}×${item.thickness} ইঞ্চি, ${item.quantity}টি → ${item.cft.toFixed(2)} সিএফটি`
+        );
+      }
+    });
+
+    doc.moveDown(1);
+    doc.font("bold").fontSize(12).text(`মোট সিএফটি: ${group.totalCFT.toFixed(2)}`);
+    doc.font("body").fontSize(11);
+    doc.text(`প্রতি সিএফটি দর: ৳${group.ratePerCFT}`);
+    doc.font("bold").fontSize(13).fillColor("#402a18").text(`সর্বমোট: ৳${group.totalPrice.toFixed(2)}`);
+    doc.font("body").fontSize(11).fillColor("#000");
+    doc.text(`পরিশোধিত: ৳${group.paidAmount}`);
+    doc.fillColor(group.dueAmount > 0 ? "#c0392b" : "#2c8f4e").text(`বকেয়া: ৳${group.dueAmount.toFixed(2)}`);
+  }
+
+  doc.end();
+});
 // ---- Voice/text parsing (AI's ONLY job: extract structured data, never calculate) ----
 export const parseVoice = asyncHandler(async (req: Request, res: Response) => {
   const { transcript } = req.body as { transcript: string };

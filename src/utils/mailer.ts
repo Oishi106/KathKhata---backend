@@ -36,8 +36,8 @@ function emailWrapper(bodyHtml: string): string {
             </td>
           </tr>
         </table>
-        <h1 style="color: #ffffff; font-size: 22px; margin: 12px 0 0; font-weight: 700;">কাঠখাতা এআই</h1>
-        <p style="color: #d8f0e0; font-size: 13px; margin: 4px 0 0;">KathKhata AI — Your Sawmill's Digital Ledger</p>
+        <h1 style="color: #ffffff; font-size: 22px; margin: 12px 0 0; font-weight: 700;">কাঠখাতা</h1>
+        <p style="color: #d8f0e0; font-size: 13px; margin: 4px 0 0;">কাঠখাতা — Your Sawmill's Digital Ledger</p>
       </div>
 
       <!-- Body -->
@@ -96,9 +96,9 @@ export const sendOtpEmail = async (to: string, otp: string) => {
     <div style="background: #f7f3ea; border-radius: 12px; padding: 20px; text-align: center; margin: 16px 0;">
       <span style="font-size: 36px; font-weight: 800; letter-spacing: 10px; color: #2c8f4e;">${otp}</span>
     </div>
-    <p style="color: #a89878; font-size: 13px; margin: 0;">এই কোডটি ১০ মিনিটের জন্য বৈধ। This code is valid for 10 minutes.</p>
+    <p style="color: #a89878; font-size: 13px; margin: 0;">এই কোডটি ১০ মিনিটের জন্য বৈধ। (This code is valid for 10 minutes.)</p>
     <p style="color: #c4b89a; font-size: 12px; margin: 16px 0 0;">
-      আপনি যদি এই কোড অনুরোধ না করে থাকেন, এই ইমেইলটি উপেক্ষা করুন।
+      আপনি যদি এই কোড অনুরোধ না করে থাকেন, এই ইমেইলটি উপেক্ষা করুন — আপনার অ্যাকাউন্ট নিরাপদ আছে।
     </p>
   `;
 
@@ -126,7 +126,7 @@ export const sendPasswordResetEmail = async (to: string, code: string) => {
     <div style="background: #f7f3ea; border-radius: 12px; padding: 20px; text-align: center; margin: 16px 0;">
       <span style="font-size: 36px; font-weight: 800; letter-spacing: 10px; color: #2c8f4e;">${code}</span>
     </div>
-    <p style="color: #a89878; font-size: 13px; margin: 0;">এই কোডটি ১৫ মিনিটের জন্য বৈধ। This code is valid for 15 minutes.</p>
+    <p style="color: #a89878; font-size: 13px; margin: 0;">এই কোডটি ১৫ মিনিটের জন্য বৈধ। (This code is valid for 15 minutes.)</p>
     <p style="color: #c4b89a; font-size: 12px; margin: 16px 0 0;">
       আপনি যদি পাসওয়ার্ড রিসেট অনুরোধ না করে থাকেন, এই ইমেইলটি উপেক্ষা করুন — আপনার অ্যাকাউন্ট নিরাপদ আছে।
     </p>
