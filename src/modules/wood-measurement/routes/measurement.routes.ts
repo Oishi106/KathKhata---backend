@@ -28,15 +28,15 @@ router.post("/groups/:groupId/reopen", Controller.reopenGroup);
 // Daily book
 router.post("/bulk-pdf", Controller.bulkPdf);
 router.get("/daily-book", Controller.dailyBook);
-router.get("/daily-book/pdf", Controller.downloadDailyBook);
+router.get("/daily-book/pdf", Controller.downloadDailyBook);        
 
 // Voice/text parsing
-router.post("/voice-parse", Controller.parseVoice);
+router.post("/voice-parse", Controller.parseVoice);              
 
 // History & single record
 router.get("/history", Controller.history);
 router.get("/:id", Controller.getById);
-router.get("/:id/slip", Controller.downloadSlip);
+router.get("/:id/slip", Controller.downloadSlip);     
 router.delete("/:id", Controller.remove);
 
 export default router;
