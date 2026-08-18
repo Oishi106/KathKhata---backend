@@ -28,7 +28,7 @@ router.post("/groups/:groupId/reopen", Controller.reopenGroup);
 // Daily book
 router.post("/bulk-pdf", Controller.bulkPdf);
 router.get("/daily-book", Controller.dailyBook);
-router.get("/daily-book/pdf", Controller.downloadDailyBook);        
+router.get("/daily-book/pdf", Controller.downloadDailyBook);                           
 
 // Voice/text parsing
 router.post("/voice-parse", Controller.parseVoice);              
