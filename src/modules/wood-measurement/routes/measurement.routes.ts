@@ -37,6 +37,6 @@ router.post("/voice-parse", Controller.parseVoice);
 router.get("/history", Controller.history);
 router.get("/:id", Controller.getById);
 router.get("/:id/slip", Controller.downloadSlip);     
-router.delete("/:id", Controller.remove);
+router.delete("/:id", Controller.remove);     
 
 export default router;
