@@ -34,7 +34,7 @@ router.get("/daily-book/pdf", Controller.downloadDailyBook);
 router.post("/voice-parse", Controller.parseVoice);              
 
 // History & single record
-router.get("/history", Controller.history);
+router.get("/history", Controller.history);                  
 router.get("/:id", Controller.getById);
 router.get("/:id/slip", Controller.downloadSlip);     
 router.delete("/:id", Controller.remove);     
