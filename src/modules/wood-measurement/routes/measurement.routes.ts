@@ -26,7 +26,7 @@ router.post("/groups/:groupId/close", validate(closeMeasurementSchema), Controll
 router.post("/groups/:groupId/reopen", Controller.reopenGroup);
 
 // Daily book
-router.post("/bulk-pdf", Controller.bulkPdf);
+router.post("/bulk-pdf", Controller.bulkPdf);                     
 router.get("/daily-book", Controller.dailyBook);
 router.get("/daily-book/pdf", Controller.downloadDailyBook);                           
 
