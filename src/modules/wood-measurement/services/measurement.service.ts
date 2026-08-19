@@ -213,7 +213,7 @@ export const MeasurementService = {
   },
   async getById(owner: string, id: string) {
     const group = await Measurement.findOne({ _id: id, owner });
-    if (!group) throw ApiError.notFound("Measurement not found");
+    if (!group) throw ApiError.notFound("Measurement not found");               
     return group;
   },
 
