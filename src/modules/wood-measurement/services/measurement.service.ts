@@ -206,8 +206,8 @@ export const MeasurementService = {
       createdAt: { $gte: start, $lte: end }
     }).sort({ createdAt: 1 });
 
-    const grandTotalCFT = records.reduce((s, r) => s + r.totalCFT, 0);
-    const grandTotalPrice = records.reduce((s, r) => s + r.totalPrice, 0);   
+    const grandTotalCFT = records.reduce((s, r) => s + r.totalCFT, 0);      
+    const grandTotalPrice = records.reduce((s, r) => s + r.totalPrice, 0);                         
 
     return { date: dateStr, records, grandTotalCFT, grandTotalPrice };
   },
