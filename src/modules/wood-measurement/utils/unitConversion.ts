@@ -50,7 +50,7 @@ export const breakdownFromInches = (totalInches: number): LengthBreakdown => {
     inches,
     points,
     totalInches: round2(totalInches),            
-    totalPoints: round2(totalInches * 100),
+    totalPoints: round2(totalInches * 100),    
     totalCm: round2(totalInches * 2.54),                              
     totalFeetDecimal: round2(totalInches / 12)
   };
@@ -58,5 +58,5 @@ export const breakdownFromInches = (totalInches: number): LengthBreakdown => {
 
 /** Combine separate feet+inch+point fields (as commonly entered) into total inches. */
 export const combineToInches = (feet = 0, inches = 0, points = 0): number => {
-  return feet * 12 + inches + points / 100;   
+  return feet * 12 + inches + points / 100;         
 };
