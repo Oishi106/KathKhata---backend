@@ -222,4 +222,4 @@ export const MeasurementService = {
     if (!group) throw ApiError.notFound("Measurement not found");
     return group;
   }
-};
+};     
