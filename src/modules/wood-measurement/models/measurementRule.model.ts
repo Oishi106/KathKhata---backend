@@ -25,12 +25,12 @@ const measurementRuleSchema = new Schema<IMeasurementRule>(
       type: String,
       enum: ["round_log_feet", "round_log_inch", "size_cut"],
       required: true
-    },
+    },               
     unit: { type: String, enum: ["feet", "inch", "mixed"], default: "mixed" },
     description: { type: String, trim: true },
     version: { type: Number, default: 1 },
-    status: { type: String, enum: ["active", "inactive"], default: "active" },
-    isDefault: { type: Boolean, default: false }
+    status: { type: String, enum: ["active", "inactive"], default: "active" },                    
+    isDefault: { type: Boolean, default: false }                
   },
   { timestamps: true }
 );
