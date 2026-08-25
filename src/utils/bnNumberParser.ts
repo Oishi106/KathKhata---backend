@@ -144,11 +144,11 @@ export function extractNumbersByKeywords(
     if (bestPhraseIdx >= 0 && bestDistance <= 6) {
       // ৬ শব্দের মধ্যে থাকলেই grহণযোগ্য মনে করছি, নাহলে ভুল মিলে যাওয়ার ঝুঁকি
       result[field.name] = phrases[bestPhraseIdx].value;
-      used.add(bestPhraseIdx);
+      used.add(bestPhraseIdx);   
     } else {
-      result[field.name] = null;
+      result[field.name] = null;    
     }
-  }
+  }   
 
   return result;
 }
