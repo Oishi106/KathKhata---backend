@@ -51,9 +51,9 @@ const measurementSchema = new Schema<IMeasurement>(
     operator: { type: String, trim: true },
     items: { type: [measurementItemSchema], default: [] },
     totalCFT: { type: Number, default: 0 },
-    ratePerCFT: { type: Number, default: 0 },
-    totalPrice: { type: Number, default: 0 },
-    paidAmount: { type: Number, default: 0 },
+    ratePerCFT: { type: Number, default: 0 },   
+    totalPrice: { type: Number, default: 0 },    
+    paidAmount: { type: Number, default: 0 },     
     dueAmount: { type: Number, default: 0 },
     status: { type: String, enum: ["open", "closed"], default: "open" }
   },
