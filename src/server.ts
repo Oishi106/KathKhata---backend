@@ -10,12 +10,12 @@ const start = async () => {
   await connectDB();
 
   const server = app.listen(PORT, () => {
-    logger.info(`🌲 KathKhata AI API running on port ${PORT} [${env.NODE_ENV}]`);
-    logger.info(`📚 Swagger docs at http://localhost:${PORT}/api-docs`);
+    logger.info(`🌲 KathKhata AI API running on port ${PORT} [${env.NODE_ENV}]`);    
+    logger.info(`📚 Swagger docs at http://localhost:${PORT}/api-docs`);   
   });
 
   const shutdown = async (signal: string) => {
-    logger.info(`${signal} received. Shutting down gracefully...`);
+    logger.info(`${signal} received. Shutting down gracefully...`);  
     server.close(async () => {
       await disconnectDB();
       logger.info("Server closed. Process exiting.");
@@ -31,7 +31,7 @@ const start = async () => {
   process.on("SIGTERM", () => shutdown("SIGTERM"));
   process.on("SIGINT", () => shutdown("SIGINT"));
   process.on("unhandledRejection", (reason) => {
-    logger.error(`Unhandled Rejection: ${reason}`);
+    logger.error(`Unhandled Rejection: ${reason}`);    
   });
 };
 
