@@ -7,6 +7,7 @@ import { ApiError } from "../../../utils/ApiError";
 import { MeasurementService } from "../services/measurement.service";
 import { User } from "../../user/models/user.model";
 import { parseVoiceTranscript } from "../utils/voiceParser";
+import { formatCftLine } from "../utils/unitConversion";
 
 // ---- Rules ----
 export const listRules = asyncHandler(async (req: Request, res: Response) => {
@@ -117,19 +118,19 @@ export const downloadSlip = asyncHandler(async (req: Request, res: Response) => 
   group.items.forEach((item: any, i: number) => {
     if (item.mode === "round_log") {
       doc.text(
-        `${i + 1}) গোল কাঠ — পরিধি ${item.girth} ${item.girthUnit === "inch" ? "ইঞ্চি" : "ফুট"}, দৈর্ঘ্য ${item.length} ফুট, ${item.quantity}টি → ${item.cft.toFixed(2)} সিএফটি`
+        `${i + 1}) গোল কাঠ — পরিধি ${item.girth} ${item.girthUnit === "inch" ? "ইঞ্চি" : "ফুট"}, দৈর্ঘ্য ${item.length} ফুট, ${item.quantity}টি → ${formatCftLine(item.cft)}`
       );
     } else {
       doc.text(
-        `${i + 1}) সাইজ কাট — ${item.length}×${item.width}×${item.thickness} ইঞ্চি, ${item.quantity}টি → ${item.cft.toFixed(2)} সিএফটি`
+        `${i + 1}) সাইজ কাট — ${item.length}×${item.width}×${item.thickness} ইঞ্চি, ${item.quantity}টি → ${formatCftLine(item.cft)}`
       );
     }
   });
 
   doc.moveDown(1);
-  doc.font("bold").fontSize(12).text(`মোট সিএফটি: ${group.totalCFT.toFixed(2)}`);
+  doc.font("bold").fontSize(12).text(`মোট CFT: ${group.totalCFT.toFixed(2)}`);
   doc.font("body").fontSize(11);
-  doc.text(`প্রতি সিএফটি দর: ৳${group.ratePerCFT}`);
+  doc.text(`প্রতি CFT দর: ৳${group.ratePerCFT}`);
   doc.font("bold").fontSize(13).fillColor("#402a18").text(`সর্বমোট: ৳${group.totalPrice.toFixed(2)}`);
   doc.font("body").fontSize(11).fillColor("#000");
   doc.text(`পরিশোধিত: ৳${group.paidAmount}`);
@@ -172,16 +173,16 @@ export const downloadDailyBook = asyncHandler(async (req: Request, res: Response
     group.items.forEach((item: any, idx: number) => {
       const line =
         item.mode === "round_log"
-          ? `   ${idx + 1}) পরিধি ${item.girth}${item.girthUnit === "inch" ? "in" : "ft"}, দৈর্ঘ্য ${item.length}ft, ${item.quantity}টি → ${item.cft.toFixed(2)} সিএফটি`
-          : `   ${idx + 1}) ${item.length}×${item.width}×${item.thickness}in, ${item.quantity}টি → ${item.cft.toFixed(2)} সিএফটি`;
+          ? `   ${idx + 1}) পরিধি ${item.girth}${item.girthUnit === "inch" ? "in" : "ft"}, দৈর্ঘ্য ${item.length}ft, ${item.quantity}টি → ${formatCftLine(item.cft)}`
+          : `   ${idx + 1}) ${item.length}×${item.width}×${item.thickness}in, ${item.quantity}টি → ${formatCftLine(item.cft)}`;
       doc.text(line);
     });
-    doc.font("bold").fontSize(10).text(`   মোট: ${group.totalCFT.toFixed(2)} সিএফটি — ৳${group.totalPrice.toFixed(2)}`);
+    doc.font("bold").fontSize(10).text(`   মোট: ${group.totalCFT.toFixed(2)} CFT — ৳${group.totalPrice.toFixed(2)}`);
     doc.moveDown(0.8);
   });
 
   doc.moveDown(1);
-  doc.font("bold").fontSize(14).fillColor("#2c8f4e").text(`সর্বমোট সিএফটি: ${grandTotalCFT.toFixed(2)}`);
+  doc.font("bold").fontSize(14).fillColor("#2c8f4e").text(`সর্বমোট CFT: ${grandTotalCFT.toFixed(2)}`);
   doc.text(`সর্বমোট মূল্য: ৳${grandTotalPrice.toFixed(2)}`);
 
   if (records.length === 0) {
@@ -229,19 +230,19 @@ export const bulkPdf = asyncHandler(async (req: Request, res: Response) => {
     group.items.forEach((item: any, idx: number) => {
       if (item.mode === "round_log") {
         doc.text(
-          `${idx + 1}) গোল কাঠ — পরিধি ${item.girth} ${item.girthUnit === "inch" ? "ইঞ্চি" : "ফুট"}, দৈর্ঘ্য ${item.length} ফুট, ${item.quantity}টি → ${item.cft.toFixed(2)} সিএফটি`
+          `${idx + 1}) গোল কাঠ — পরিধি ${item.girth} ${item.girthUnit === "inch" ? "ইঞ্চি" : "ফুট"},   দৈর্ঘ্য ${item.length} ফুট,   ${item.quantity}টি → ${formatCftLine(item.cft)}`
         );
       } else {
         doc.text(
-          `${idx + 1}) সাইজ কাট — ${item.length}×${item.width}×${item.thickness} ইঞ্চি, ${item.quantity}টি → ${item.cft.toFixed(2)} সিএফটি`
+          `${idx + 1}) সাইজ কাট — ${item.length}×${item.width}×${item.thickness} ইঞ্চি, ${item.quantity}টি → ${formatCftLine(item.cft)}`
         );
       }
     });
 
     doc.moveDown(1);
-    doc.font("bold").fontSize(12).text(`মোট সিএফটি: ${group.totalCFT.toFixed(2)}`);
+    doc.font("bold").fontSize(12).text(`মোট CFT: ${group.totalCFT.toFixed(2)}`);
     doc.font("body").fontSize(11);
-    doc.text(`প্রতি সিএফটি দর: ৳${group.ratePerCFT}`);
+    doc.text(`প্রতি CFT দর: ৳${group.ratePerCFT}`);
     doc.font("bold").fontSize(13).fillColor("#402a18").text(`সর্বমোট: ৳${group.totalPrice.toFixed(2)}`);
     doc.font("body").fontSize(11).fillColor("#000");
     doc.text(`পরিশোধিত: ৳${group.paidAmount}`);
