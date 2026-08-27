@@ -7,24 +7,45 @@
  * input.
  *
  * Girth speech rule:
- *   "<length> ফুট <A> <B>" → length = <length> ft,
- *   girth = <A> ft <B> in (either can be "শূন্য"/0; e.g. "সাত ফুট শূন্য নয়"
- *   → length 7 ft, girth 0 ft 9 in — i.e. just 9 inches).
- *   The word "পরিধি/বেয়ার/বেড়" can also explicitly tag a single girth-inch
- *   value if the speaker prefers that style — kept as a fallback.
+ *   "<length> ফুট <girth tokens>" — the girth tokens right after ফুট are
+ *   read WITHIN the boundary up to the next "ফুট" occurrence (never
+ *   crossing into the next measurement/row). Two forms are handled:
+ *
+ *   1) Compound two-digit number (browser ASR often merges spoken
+ *      "এক এক" into the single token "11", "২২" stays "22", etc.):
+ *      if the token is exactly two digits (or a word-number 10-99, e.g.
+ *      "এগারো"), split its digits: tens digit = girth-feet,
+ *      units digit = girth-inch. "১১" → 1 ft 1 in. "৩১" → 3 ft 1 in.
+ *
+ *   2) Two separate single-digit tokens (when ASR keeps them apart,
+ *      e.g. "শূন্য নয়"): first = girth-feet, second = girth-inch.
+ *      "সাত ফুট শূন্য নয়" → girth 0 ft 9 in (= 9 inches).
+ *
+ *   Either way the result is stored as a single total-inches value in
+ *   ParsedRow.girthInch (matches the "পরিধি(in)" column in the review
+ *   modal), since that's the unit the calculation engine expects.
+ *
+ * Segment-break rule:
+ *   "এরপর"/"তারপর" is a HARD boundary — the parser never reads a girth
+ *   or quantity number past this word into the next measurement, even
+ *   if no "ফুট" has appeared yet after it.
  *
  * Correction handling:
- *   If the speaker corrects themselves mid-sentence — "না এটা তিন ফুট এক
- *   তিন হবে" / "ভুল, ৫ ফুট দুই এক" — the measurement stated right after
- *   the correction word REPLACES the most recently parsed row in that
- *   customer block, instead of being added as a new row.
+ *   If the speaker corrects themselves — "না এটা তিন ফুট এক তিন হবে" —
+ *   the measurement stated right after the correction trigger REPLACES
+ *   the most recently parsed row in that customer block.
+ *   IMPORTANT LIMITATION: this only works if the correction word ("না"/
+ *   "ভুল"/"নাহ") actually appears in the recognized transcript. Browser
+ *   speech recognition sometimes drops short interjection words — if
+ *   "না" isn't in the transcript text, no parser can recover the intent
+ *   from text alone. Always check the transcript box before pressing
+ *   "মাপ বুঝুন".
  *
  * Noise filtering:
- *   Only text anchored to recognized keywords (customer name markers,
- *   ফুট/ইঞ্চি, টা/টি quantity, correction words) is used. Any other
- *   surrounding chatter (unrelated words picked up by the mic) is never
- *   parsed into a number — unanchored words are simply ignored by design,
- *   since every number extraction requires a nearby keyword.
+ *   Every number is only read relative to a recognized keyword (ফুট,
+ *   টা/টি, পরিধি, ইঞ্চি) and bounded so it never crosses into the next
+ *   measurement — unrelated surrounding chatter with no anchoring
+ *   keyword is never parsed into a number.
  *
  * Local sawmill vocabulary mapping (voice-only, never shown as UI labels):
  *   আড়ে, আরে, লম্বা, দৈর্ঘ্য  → length
@@ -67,7 +88,6 @@ const bengaliDigits: Record<string, string> = {
 const normalizeDigits = (text: string): string =>
   text.replace(/[০-৯]/g, (d) => bengaliDigits[d] ?? d);
 
-/** Matches one number token (digit string or a recognized Bangla number word) at the start of a string. */
 const NUMBER_TOKEN_RE = new RegExp(
   `^(\\d+(?:\\.\\d+)?|${Object.keys(numberWords).sort((a, b) => b.length - a.length).join("|")})`
 );
@@ -90,45 +110,63 @@ const extractNumberNear = (text: string, keywordIndex: number, windowBefore = 15
 };
 
 /**
- * Reads two consecutive number tokens immediately after a starting index
- * (skipping whitespace/commas) — used to capture "<A> <B>" as girth ft+in
- * right after "<length> ফুট". Returns null if fewer than 2 tokens found
- * before hitting a non-number word (which means the pattern doesn't apply,
- * e.g. explicit "পরিধি ৯ ইঞ্চি" phrasing instead).
+ * Reads girth right after "ফুট", bounded so it NEVER crosses into the
+ * next "ফুট" occurrence OR the next "এরপর"/"তারপর" segment-break (fixes
+ * the row-bleeding bug). Handles both a compound two-digit token
+ * (ASR-merged "এক এক" → "11") and two separate single-digit tokens.
+ * Returns total inches, or null if no girth-like number is found in the
+ * bounded window.
  */
-const readTwoNumbersAfter = (text: string, fromIndex: number): { a: number; b: number; consumedTo: number } | null => {
-  let cursor = fromIndex;
-  const tokens: { val: number; end: number }[] = [];
+const readGirthAfterFeet = (
+  fullText: string,
+  startIdx: number,
+  boundaryIdx: number
+): number | null => {
+  const window = fullText.slice(startIdx, boundaryIdx);
+  let cursor = 0;
 
-  for (let i = 0; i < 2; i++) {
-    const rest = text.slice(cursor).replace(/^[\s,।]+/, "");
-    const skipped = text.slice(cursor).length - rest.length;
+  const readNextToken = (): { raw: string; val: number; end: number } | null => {
+    const rest = window.slice(cursor).replace(/^[\s,।]+/, "");
+    const skipped = window.slice(cursor).length - rest.length;
     const m = rest.match(NUMBER_TOKEN_RE);
-    if (!m) break;
+    if (!m) return null;
     const val = wordToNumber(m[1]);
-    if (val === null) break;
-    const consumedLen = skipped + m[1].length;
-    cursor = cursor + consumedLen;
-    tokens.push({ val, end: cursor });
+    if (val === null) return null;
+    return { raw: m[1], val, end: cursor + skipped + m[1].length };
+  };
+
+  const t1 = readNextToken();
+  if (!t1) return null;
+
+  // Compound two-digit number (either a literal 2-char digit string, or
+  // a word-number 10-99, e.g. "এগারো") → split into girth-ft / girth-in.
+  const isCompound = /^\d{2}$/.test(t1.raw) || (t1.val >= 10 && t1.val <= 99);
+  if (isCompound) {
+    const ft = Math.floor(t1.val / 10);
+    const inch = t1.val % 10;
+    return ft * 12 + inch;
   }
 
-  if (tokens.length < 2) return null;
-  return { a: tokens[0].val, b: tokens[1].val, consumedTo: tokens[1].end };
+  // Single-digit girth-ft — look for a second token as girth-in, still
+  // within the same bounded window.
+  cursor = t1.end;
+  const t2 = readNextToken();
+  if (!t2) return t1.val * 12; // only the feet part was spoken
+
+  return t1.val * 12 + t2.val;
 };
 
-const CUSTOMER_START_RE = /([\u0980-\u09FF]+?)(?:এর)?\s*(কার্ড|কাঠ|হিসাব)/g;
+const CUSTOMER_START_RE = /([\u0980-\u09FF]+?)(?:এর)?\s*(কার্ড|কাঠ|কাট|হিসাব)/g;
 const CUSTOMER_END_RE = /([\u0980-\u09FF]+?)\s*শেষ/g;
 const FEET_RE = /ফুট|ফিট/g;
 const INCH_RE = /ইঞ্চি/g;
 const GIRTH_RE = /বেয়ার|বেড়|পরিধি/g;
 const RATE_RE = /(প্রতি\s*সেফটি|প্রতি\s*সিএফটি)[^\d০-৯]*(\d+|[০-৯]+)/;
-/** Correction trigger — "না", "ভুল", "নাহ" — optionally followed by "এটা/এইটা" — signals the NEXT measurement replaces the LAST parsed one. */
+/** Segment-break — "এরপর"/"তারপর" is a hard boundary that a girth/qty read never crosses. */
+const SEGMENT_BREAK_RE = /এরপর|তারপর/g;
+/** Correction trigger — only fires if "না"/"ভুল"/"নাহ" is actually present in the recognized text (see limitation note above). */
 const CORRECTION_RE = /(না|ভুল|নাহ)(?:[,।]|\s)+(?:এটা|এইটা)?\s*/g;
 
-/**
- * Parses a Bangla transcript into structured customer blocks with
- * measurement rows. Deterministic, rule-based — no hallucination risk.
- */
 export const parseVoiceTranscript = (rawText: string): ParseResult => {
   const text = normalizeDigits(rawText.trim());
   const warnings: string[] = [];
@@ -146,7 +184,7 @@ export const parseVoiceTranscript = (rawText: string): ParseResult => {
   ].sort((a, b) => a.pos - b.pos);
 
   if (events.length === 0) {
-    warnings.push("কোনো গ্রাহকের নাম শনাক্ত করা যায়নি — 'রহিমের কাঠ' এভাবে বলুন।");
+    warnings.push("কোনো গ্রাহকের নাম শনাক্ত করা যায়নি — 'রহিমের কার্ড' এভাবে বলুন।");
     return { blocks: [], warnings };
   }
 
@@ -170,45 +208,47 @@ export const parseVoiceTranscript = (rawText: string): ParseResult => {
 
     if (!currentBlock) continue;
 
-    // Mark correction-trigger positions in this segment — any row whose
-    // "ফুট" keyword falls right after one of these positions replaces the
-    // previous row instead of appending.
     const correctionPositions = [...segmentText.matchAll(CORRECTION_RE)].map(
       (m) => (m.index ?? 0) + m[0].length
     );
 
+    // "এরপর"/"তারপর" শব্দের অবস্থান — এগুলো কখনো পার হয়ে girth/qty পড়া হবে না
+    const breakPositions = [...segmentText.matchAll(SEGMENT_BREAK_RE)].map((m) => m.index ?? 0);
+    const nextBreakAfter = (pos: number): number => {
+      const found = breakPositions.find((bp) => bp > pos);
+      return found ?? segmentText.length;
+    };
+
     const feetMatches = [...segmentText.matchAll(FEET_RE)];
-    for (const fm of feetMatches) {
+    for (let fi = 0; fi < feetMatches.length; fi++) {
+      const fm = feetMatches[fi];
       const feetIdx = fm.index ?? 0;
       const feetVal = extractNumberNear(segmentText, feetIdx);
       if (feetVal === null) continue;
 
-      // Try the primary rule first: two number tokens right after "ফুট"
-      // become girth-feet + girth-inch (e.g. "৬ ফুট এক এক" → girth 1ft 1in;
-      // "৭ ফুট শূন্য নয়" → girth 0ft 9in i.e. just 9 inches).
       const afterFeetIdx = feetIdx + fm[0].length;
-      const twoNums = readTwoNumbersAfter(segmentText, afterFeetIdx);
+      // Never read past the NEXT "ফুট" or the next "এরপর"/"তারপর" —
+      // this is what stops row-bleeding.
+      const nextFeetBoundary = fi + 1 < feetMatches.length ? (feetMatches[fi + 1].index ?? segmentText.length) : segmentText.length;
+      const boundaryIdx = Math.min(nextFeetBoundary, nextBreakAfter(afterFeetIdx));
 
-      let girthVal: number | null = null;
+      let girthVal = readGirthAfterFeet(segmentText, afterFeetIdx, boundaryIdx);
       let inchVal: number | null = null;
 
-      if (twoNums) {
-        // girth feet + girth inch → combine to a single inch total for storage
-        girthVal = twoNums.a * 12 + twoNums.b;
-      } else {
-        // Fallback: explicit "ইঞ্চি" / "পরিধি" keyword phrasing
-        const afterFeet = segmentText.slice(feetIdx, feetIdx + 20);
+      if (girthVal === null) {
+        // Fallback: explicit "ইঞ্চি" / "পরিধি" keyword phrasing, still bounded.
+        const afterFeet = segmentText.slice(feetIdx, boundaryIdx);
         const inchMatch = afterFeet.match(INCH_RE);
         if (inchMatch && inchMatch.index !== undefined) {
           inchVal = extractNumberNear(afterFeet, inchMatch.index);
         }
-        const girthMatch = segmentText.slice(feetIdx, feetIdx + 40).match(GIRTH_RE);
+        const girthMatch = afterFeet.match(GIRTH_RE);
         if (girthMatch && girthMatch.index !== undefined) {
-          girthVal = extractNumberNear(segmentText.slice(feetIdx, feetIdx + 40), girthMatch.index);
+          girthVal = extractNumberNear(afterFeet, girthMatch.index);
         }
       }
 
-      const qtyWindow = segmentText.slice(feetIdx, feetIdx + 60);
+      const qtyWindow = segmentText.slice(feetIdx, boundaryIdx);
       const qtyMatch = qtyWindow.match(/(\d+|[\u0980-\u09FF]+)\s*(টা|টি)/);
       let quantity = 1;
       if (qtyMatch) {
@@ -224,8 +264,6 @@ export const parseVoiceTranscript = (rawText: string): ParseResult => {
         raw: qtyWindow.trim()
       };
 
-      // Was this measurement preceded by a correction trigger ("না এটা...")?
-      // If so, replace the last row instead of adding a new one.
       const isCorrection = correctionPositions.some((cp) => feetIdx >= cp && feetIdx - cp < 15);
       if (isCorrection && currentBlock.rows.length > 0) {
         currentBlock.rows[currentBlock.rows.length - 1] = newRow;
