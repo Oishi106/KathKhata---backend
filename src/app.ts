@@ -40,6 +40,6 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api/v1", apiRoutes);
 
 app.use(notFoundHandler);
-app.use(errorHandler);
+app.use(errorHandler);    
 
-export default app;
+export default app;             
