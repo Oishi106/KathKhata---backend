@@ -34,12 +34,12 @@ app.use(globalLimiter);
 
 app.get("/health", (_req: Request, res: Response) => {
   res.status(200).json({ success: true, message: "KathKhata AI API is healthy", timestamp: new Date() });
-});
+});      
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api/v1", apiRoutes);
 
-app.use(notFoundHandler);
+app.use(notFoundHandler);          
 app.use(errorHandler);    
 
 export default app;             
