@@ -22,15 +22,15 @@ app.use(
   })
 );
 app.use(compression());
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "10mb" }));                          
+app.use(express.urlencoded({ extended: true }));           
 app.use(cookieParser(env.COOKIE_SECRET));
 app.use(
   morgan("combined", {
     stream: { write: (message: string) => logger.info(message.trim()) }
   })
 );
-app.use(globalLimiter);
+app.use(globalLimiter);                
 
 app.get("/health", (_req: Request, res: Response) => {
   res.status(200).json({ success: true, message: "KathKhata AI API is healthy", timestamp: new Date() });
