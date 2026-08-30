@@ -21,15 +21,15 @@ app.use(
     credentials: true
   })
 );
-app.use(compression());
-app.use(express.json({ limit: "10mb" }));                          
+app.use(compression());                
+app.use(express.json({ limit: "10mb" }));                                             
 app.use(express.urlencoded({ extended: true }));           
 app.use(cookieParser(env.COOKIE_SECRET));
 app.use(
   morgan("combined", {
     stream: { write: (message: string) => logger.info(message.trim()) }
   })
-);
+);          
 app.use(globalLimiter);                
 
 app.get("/health", (_req: Request, res: Response) => {
