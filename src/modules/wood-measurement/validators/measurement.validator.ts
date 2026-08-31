@@ -37,10 +37,10 @@ export const closeMeasurementSchema = z.object({
 
 export const createRuleSchema = z.object({
   body: z.object({
-    name: z.string().min(1),
-    region: z.string().optional(),
+    name: z.string().min(1),                                  
+    region: z.string().optional(),                             
     formulaType: z.enum(["round_log_feet", "round_log_inch", "size_cut"]),
-    unit: z.enum(["feet", "inch", "mixed"]).optional(),
+    unit: z.enum(["feet", "inch", "mixed"]).optional(),                                    
     description: z.string().optional(),
     status: z.enum(["active", "inactive"]).optional()
   })
