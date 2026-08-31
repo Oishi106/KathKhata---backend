@@ -37,9 +37,9 @@ app.get("/health", (_req: Request, res: Response) => {
 });      
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-app.use("/api/v1", apiRoutes);
+app.use("/api/v1", apiRoutes);                                              
 
-app.use(notFoundHandler);          
-app.use(errorHandler);    
+app.use(notFoundHandler);                                      
+app.use(errorHandler);                      
 
 export default app;             
