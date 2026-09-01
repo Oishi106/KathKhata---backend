@@ -59,50 +59,39 @@ export const combineToInches = (feet = 0, inches = 0, points = 0): number => {
 };
 
 /**
- * CFT (cubic feet) কে "ফুট-ইঞ্চি-পয়েন্ট" style এ ভাঙে —
+ * CFT (cubic feet) কে "ফুট-ইঞ্চি-পা" style এ ভাঙে —
  * এটা প্রকৃত ইউনিট কনভার্সন না (CFT আয়তন, বাকিগুলো দৈর্ঘ্য),
- * শুধু করাতকলের প্রথাগত display format অনুকরণ করে।
+ * করাতকলের বইয়ের প্রথাগত (base-12) display format অনুসরণ করে।
  *
- * নিয়ম:
- * ১) CFT আগে ২ decimal-এ round হবে
- * ২) rounded CFT × 12 = total inch (decimal)
- * ৩) সেটা ১ decimal-এ round হবে
- * ৪) পূর্ণ অংশ = ইঞ্চি, দশমিকের অংক (০-৯) = পয়েন্ট
+ * নিয়ম (বইয়ের টেবিল থেকে verify করা):
+ * ১) CFT-কে আগে থেকে কোনো round করা হয় না
+ * ২) Ft   = floor(CFT)
+ * ৩) rem1 = (CFT − Ft) × 12   →   In = floor(rem1)
+ * ৪) rem2 = (rem1 − In) × 12  →   Pa = floor(rem2)
+ * ৫) প্রতিটা ধাপে round নয়, floor (truncate)। ১ ইঞ্চি = ১২ Pa (base-12, রেঞ্জ ০-১১)
  */
 export interface CftBreakdown {
   feet: number;
   inches: number;
-  points: number; // single digit 0-9
+  points: number; // 0-11 (base-12 "Pa")
 }
 
 export const breakdownCft = (cft: number): CftBreakdown => {
   const sign = cft < 0 ? -1 : 1;
   const abs = Math.abs(cft);
 
-  const roundedCft = Math.round(abs * 100) / 100;
-  const totalInchesRaw = roundedCft * 12;
-  const totalInchesRounded = Math.round(totalInchesRaw * 10) / 10;
+  const feet = Math.floor(abs);
+  const rem1 = (abs - feet) * 12;
+  const inches = Math.floor(rem1);
+  const rem2 = (rem1 - inches) * 12;
+  const points = Math.floor(rem2);
 
-  let feet = Math.floor(totalInchesRounded / 12);
-  const remainingInches = totalInchesRounded - feet * 12;
-  let inches = Math.floor(remainingInches);
-  let point = Math.round((remainingInches - inches) * 10);
-
-  if (point >= 10) {
-    point = 0;
-    inches += 1;
-  }
-  if (inches >= 12) {
-    inches = 0;
-    feet += 1;
-  }
-
-  return { feet: sign * feet, inches, points: point };
+  return { feet: sign * feet, inches, points };
 };
 
 export const formatCftLine = (cft: number): string => {
-  const roundedCft = (Math.round(Math.abs(cft) * 100) / 100) * (cft < 0 ? -1 : 1);
+  const displayCft = round2(cft);
   const b = breakdownCft(cft);
   const feetPart = b.feet !== 0 ? `${b.feet} ফুট ` : "";
-  return `${roundedCft.toFixed(2)} সিএফটি (${feetPart}${b.inches} ইঞ্চি ${b.points} পয়েন্ট)`;
+  return `${displayCft.toFixed(2)} সিএফটি (${feetPart}${b.inches} ইঞ্চি ${b.points} পা)`;
 };
