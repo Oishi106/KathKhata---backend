@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import path from "path";
+import fs from "fs";
 import PDFDocument from "pdfkit";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import { sendSuccess } from "../../../utils/ApiResponse";
@@ -88,6 +89,10 @@ export const remove = asyncHandler(async (req: Request, res: Response) => {
 const FONT_REGULAR = path.join(__dirname, "../../../assets/fonts/HindSiliguri-Regular.ttf");
 const FONT_BOLD = path.join(__dirname, "../../../assets/fonts/HindSiliguri-Bold.ttf");
 
+// ডিবাগ লগ — ডিপ্লয় করার পর Vercel/Render লগে চেক করার জন্য
+console.log("Font Regular exists:", fs.existsSync(FONT_REGULAR), "| path:", FONT_REGULAR);
+console.log("Font Bold exists:", fs.existsSync(FONT_BOLD), "| path:", FONT_BOLD);
+
 // ---- PDF Slip Generator (Clean Table Version) ----
 export const downloadSlip = asyncHandler(async (req: Request, res: Response) => {
   const group: any = await MeasurementService.getById(req.user!.userId, req.params.id);
@@ -114,7 +119,7 @@ export const downloadSlip = asyncHandler(async (req: Request, res: Response) => 
   doc.text(`তারিখ: ${new Date(group.createdAt).toLocaleDateString("bn-BD")}`, 320, startY);
   doc.text(`গ্রাহক: ${group.customerName}`, 40, startY + 16);
   if (group.operator) doc.text(`অপারেটর: ${group.operator}`, 320, startY + 16);
-  
+
   doc.y = startY + 45;
   doc.font("bold").fontSize(13).fillColor("#2c8f4e").text("মাপের বিবরণ");
   doc.moveDown(0.5);
@@ -144,10 +149,10 @@ export const downloadSlip = asyncHandler(async (req: Request, res: Response) => 
     let cleaned = rawFormatted
       .replace(/সিএফটি|CFT/gi, "")
       .replace(/ইঞ্চি/g, "in")
-      .replace(/পয়েন্ট|পয়েন্ট/g, "pt")
+      .replace(/পয়েন্ট|পয়েন্ট/g, "pt")
       .replace(/ফুট/g, "ft")
       .trim();
-    
+
     const match = cleaned.match(/\(([^)]+)\)/);
     return match ? match[1].trim() : cleaned;
   };
@@ -262,12 +267,12 @@ export const downloadDailyBook = asyncHandler(async (req: Request, res: Response
   records.forEach((group: any, i: number) => {
     doc.font("bold").fontSize(12).fillColor("#402a18").text(`${i + 1}. ${group.customerName}`);
     doc.font("body").fontSize(9).fillColor("#888").text(`${group.slipNumber} · ${group.status === "closed" ? "সম্পন্ন" : "চলমান"}`);
-    
+
     let currentY = doc.y + 4;
     doc.font("body").fontSize(9).fillColor("#000");
 
     group.items.forEach((item: any, idx: number) => {
-      const cftFormatted = formatCftLine(item.cft).replace(/ইঞ্চি/g, "in").replace(/পয়েন্ট/g, "pt");
+      const cftFormatted = formatCftLine(item.cft).replace(/ইঞ্চি/g, "in").replace(/পয়েন্ট/g, "pt");
       const line =
         item.mode === "round_log"
           ? `   ${idx + 1}) পরিধি ${item.girth}${item.girthUnit === "inch" ? "in" : "ft"}, দৈর্ঘ্য ${item.length}ft, ${item.quantity}টি → ${cftFormatted}`
@@ -325,9 +330,9 @@ export const bulkPdf = asyncHandler(async (req: Request, res: Response) => {
 
     doc.font("bold").fontSize(12).fillColor("#2c8f4e").text("মাপের বিবরণ");
     doc.font("body").fontSize(9.5).fillColor("#000");
-    
+
     group.items.forEach((item: any, idx: number) => {
-      const cftFormatted = formatCftLine(item.cft).replace(/ইঞ্চি/g, "in").replace(/পয়েন্ট/g, "pt");
+      const cftFormatted = formatCftLine(item.cft).replace(/ইঞ্চি/g, "in").replace(/পয়েন্ট/g, "pt");
       if (item.mode === "round_log") {
         doc.text(
           `${idx + 1}) গোল কাঠ — পরিধি ${item.girth}${item.girthUnit === "inch" ? "in" : "ft"}, দৈর্ঘ্য ${item.length}ft, ${item.quantity}টি → ${cftFormatted}`
