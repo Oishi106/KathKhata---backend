@@ -59,7 +59,7 @@ export const combineToInches = (feet = 0, inches = 0, points = 0): number => {
 };
 
 /**
- * CFT (cubic feet) কে "ফুট-ইঞ্চি-পা" style এ ভাঙে —
+ * CFT (cubic feet) কে "ফুট-ইঞ্চি-পয়েন্ট" style এ ভাঙে —
  * এটা প্রকৃত ইউনিট কনভার্সন না (CFT আয়তন, বাকিগুলো দৈর্ঘ্য),
  * করাতকলের বইয়ের প্রথাগত (base-12) display format অনুসরণ করে।
  *
@@ -67,13 +67,13 @@ export const combineToInches = (feet = 0, inches = 0, points = 0): number => {
  * ১) CFT-কে আগে থেকে কোনো round করা হয় না
  * ২) Ft   = floor(CFT)
  * ৩) rem1 = (CFT − Ft) × 12   →   In = floor(rem1)
- * ৪) rem2 = (rem1 − In) × 12  →   Pa = floor(rem2)
- * ৫) প্রতিটা ধাপে round নয়, floor (truncate)। ১ ইঞ্চি = ১২ Pa (base-12, রেঞ্জ ০-১১)
+ * ৪) rem2 = (rem1 − In) × 12  →   পয়েন্ট = floor(rem2)
+ * ৫) প্রতিটা ধাপে round নয়, floor (truncate)। ১ ইঞ্চি = ১২ পয়েন্ট (base-12, রেঞ্জ ০-১১)
  */
 export interface CftBreakdown {
   feet: number;
   inches: number;
-  points: number; // 0-11 (base-12 "Pa")
+  points: number; // 0-11 (base-12)
 }
 
 export const breakdownCft = (cft: number): CftBreakdown => {
@@ -93,5 +93,5 @@ export const formatCftLine = (cft: number): string => {
   const displayCft = round2(cft);
   const b = breakdownCft(cft);
   const feetPart = b.feet !== 0 ? `${b.feet} ফুট ` : "";
-  return `${displayCft.toFixed(2)} সিএফটি (${feetPart}${b.inches} ইঞ্চি ${b.points} পা)`;
+  return `${displayCft.toFixed(2)} সিএফটি (${feetPart}${b.inches} ইঞ্চি ${b.points} পয়েন্ট)`;
 };
