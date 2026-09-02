@@ -331,7 +331,7 @@ export const bulkPdf = asyncHandler(async (req: Request, res: Response) => {
     if (i > 0) doc.addPage();
 
     doc.font("bold").fontSize(18).fillColor("#2c8f4e").text(businessName);
-    doc.font("body").fontSize(10).fillColor("#555").text("কাঠের মাপের স্লিপ");
+    doc.font("body").fontSize(10).fillColor("#555").text("কাঠ মাপের স্লিপ");
     doc.moveDown(1);
 
     doc.fontSize(10).fillColor("#000");
