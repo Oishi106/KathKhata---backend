@@ -8,7 +8,7 @@ import { ApiError } from "../../../utils/ApiError";
 import { MeasurementService } from "../services/measurement.service";
 import { User } from "../../user/models/user.model";
 import { parseVoiceTranscript } from "../utils/voiceParser";
-import { formatCftLine } from "../utils/unitConversion";
+import { formatCftLine, breakdownFromInches } from "../utils/unitConversion";
 
 // ---- Rules ----
 export const listRules = asyncHandler(async (req: Request, res: Response) => {
@@ -93,6 +93,19 @@ const FONT_BOLD = path.join(__dirname, "../../../assets/fonts/HindSiliguri-Bold.
 console.log("Font Regular exists:", fs.existsSync(FONT_REGULAR), "| path:", FONT_REGULAR);
 console.log("Font Bold exists:", fs.existsSync(FONT_BOLD), "| path:", FONT_BOLD);
 
+/**
+ * পরিধি (girth) কে "X ft Y in" স্টাইলে দেখায় — ঠিক যেভাবে ইউজার
+ * ভয়েসে বা ম্যানুয়াল ফুট+ইঞ্চি বক্সে ইনপুট দেন। item.girth যদি "feet"
+ * ইউনিটে সংরক্ষিত থাকে তাহলে সরাসরি ফুট হিসেবে ধরা হয় (ইঞ্চি অংশ ০);
+ * "inch" ইউনিট হলে total inches থেকে ft+in এ ভাঙা হয়।
+ */
+const formatGirthDisplay = (item: any): string => {
+  const totalInches = item.girthUnit === "inch" ? item.girth : item.girth * 12;
+  const b = breakdownFromInches(totalInches);
+  const feetPart = b.feet > 0 ? `${b.feet} ft ` : "";
+  return `${feetPart}${b.inches} in`;
+};
+
 // ---- PDF Slip Generator (Clean Table Version) ----
 export const downloadSlip = asyncHandler(async (req: Request, res: Response) => {
   const group: any = await MeasurementService.getById(req.user!.userId, req.params.id);
@@ -124,18 +137,18 @@ export const downloadSlip = asyncHandler(async (req: Request, res: Response) => 
   doc.font("bold").fontSize(13).fillColor("#2c8f4e").text("মাপের বিবরণ");
   doc.moveDown(0.5);
 
-  // Column Layout Setup
+  // Column Layout Setup — দৈর্ঘ্য (Length) আগে, পরিধি (Girth) পরে
   let currentY = doc.y;
-  const colX = { sl: 40, mode: 65, girth: 135, length: 220, qty: 300, cft: 350, extra: 415 };
-  const colWidths = { sl: 20, mode: 65, girth: 80, length: 75, qty: 45, cft: 60, extra: 140 };
+  const colX = { sl: 40, mode: 65, length: 135, girth: 220, qty: 300, cft: 350, extra: 415 };
+  const colWidths = { sl: 20, mode: 65, length: 75, girth: 80, qty: 45, cft: 60, extra: 140 };
 
   // Table Header Line
   doc.rect(40, currentY, 515, 22).fill("#f4f8f5");
   doc.font("bold").fontSize(9).fillColor("#2c8f4e");
   doc.text("#", colX.sl + 2, currentY + 6, { width: colWidths.sl });
   doc.text("বিবরণ", colX.mode, currentY + 6, { width: colWidths.mode });
-  doc.text("পরিধি (Girth)", colX.girth, currentY + 6, { width: colWidths.girth });
   doc.text("দৈর্ঘ্য (Length)", colX.length, currentY + 6, { width: colWidths.length });
+  doc.text("পরিধি (Girth)", colX.girth, currentY + 6, { width: colWidths.girth });
   doc.text("পরিমাণ", colX.qty, currentY + 6, { width: colWidths.qty });
   doc.text("CFT", colX.cft, currentY + 6, { width: colWidths.cft });
   doc.text("ইন/পয়েন্ট", colX.extra, currentY + 6, { width: colWidths.extra });
@@ -172,16 +185,16 @@ export const downloadSlip = asyncHandler(async (req: Request, res: Response) => 
     if (item.mode === "round_log") {
       doc.text(`${i + 1}`, colX.sl + 2, currentY, { width: colWidths.sl });
       doc.text("গোল কাঠ", colX.mode, currentY, { width: colWidths.mode });
-      doc.text(`${item.girth} ${item.girthUnit === "inch" ? "in" : "ft"}`, colX.girth, currentY, { width: colWidths.girth });
       doc.text(`${item.length} ft`, colX.length, currentY, { width: colWidths.length });
+      doc.text(formatGirthDisplay(item), colX.girth, currentY, { width: colWidths.girth });
       doc.text(`${item.quantity}টি`, colX.qty, currentY, { width: colWidths.qty });
       doc.text(`${item.cft.toFixed(2)}`, colX.cft, currentY, { width: colWidths.cft });
       doc.text(extraInfo, colX.extra, currentY, { width: colWidths.extra, height: rowHeight });
     } else {
       doc.text(`${i + 1}`, colX.sl + 2, currentY, { width: colWidths.sl });
       doc.text("সাইজ কাট", colX.mode, currentY, { width: colWidths.mode });
-      doc.text(`${item.length}×${item.width} in`, colX.girth, currentY, { width: colWidths.girth });
       doc.text(`${item.thickness} in`, colX.length, currentY, { width: colWidths.length });
+      doc.text(`${item.length}×${item.width} in`, colX.girth, currentY, { width: colWidths.girth });
       doc.text(`${item.quantity}টি`, colX.qty, currentY, { width: colWidths.qty });
       doc.text(`${item.cft.toFixed(2)}`, colX.cft, currentY, { width: colWidths.cft });
       doc.text("-", colX.extra, currentY, { width: colWidths.extra });
@@ -275,7 +288,7 @@ export const downloadDailyBook = asyncHandler(async (req: Request, res: Response
       const cftFormatted = formatCftLine(item.cft).replace(/ইঞ্চি/g, "in").replace(/পয়েন্ট/g, "pt");
       const line =
         item.mode === "round_log"
-          ? `   ${idx + 1}) পরিধি ${item.girth}${item.girthUnit === "inch" ? "in" : "ft"}, দৈর্ঘ্য ${item.length}ft, ${item.quantity}টি → ${cftFormatted}`
+          ? `   ${idx + 1}) দৈর্ঘ্য ${item.length}ft, পরিধি ${formatGirthDisplay(item)}, ${item.quantity}টি → ${cftFormatted}`
           : `   ${idx + 1}) ${item.length}×${item.width}×${item.thickness}in, ${item.quantity}টি → ${cftFormatted}`;
       doc.text(line, 40, currentY);
       currentY += 14;
@@ -335,7 +348,7 @@ export const bulkPdf = asyncHandler(async (req: Request, res: Response) => {
       const cftFormatted = formatCftLine(item.cft).replace(/ইঞ্চি/g, "in").replace(/পয়েন্ট/g, "pt");
       if (item.mode === "round_log") {
         doc.text(
-          `${idx + 1}) গোল কাঠ — পরিধি ${item.girth}${item.girthUnit === "inch" ? "in" : "ft"}, দৈর্ঘ্য ${item.length}ft, ${item.quantity}টি → ${cftFormatted}`
+          `${idx + 1}) গোল কাঠ — দৈর্ঘ্য ${item.length}ft, পরিধি ${formatGirthDisplay(item)}, ${item.quantity}টি → ${cftFormatted}`
         );
       } else {
         doc.text(
