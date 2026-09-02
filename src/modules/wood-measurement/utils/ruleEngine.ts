@@ -44,6 +44,14 @@ export const calculateSizeCut = (input: SizeCutInput): number => {
  * Central dispatcher — every calculation in the app must go through here.
  * AI / controllers only ever call this function; they never compute CFT
  * themselves, per the module's core design requirement.
+ *
+ * IMPORTANT: returns FULL, UNROUNDED precision. Never round here —
+ * the saved/returned CFT must retain full precision so that later
+ * "ft-in-point" breakdowns (see unitConversion.ts's breakdownCft, which
+ * follows the sawmill reference book's base-12 floor rule) match the
+ * book exactly. Rounding here would silently corrupt those breakdowns.
+ * Any display-only rounding (e.g. showing "0.47") must happen at the
+ * UI/PDF layer, never here.
  */
 export const runRuleEngine = (
   formulaType: RuleFormulaType,
@@ -51,14 +59,12 @@ export const runRuleEngine = (
 ): number => {
   switch (formulaType) {
     case "round_log_feet":
-      return round2(calculateRoundLogFeet(input as RoundLogInput));
+      return calculateRoundLogFeet(input as RoundLogInput);
     case "round_log_inch":
-      return round2(calculateRoundLogInch(input as RoundLogInput));
+      return calculateRoundLogInch(input as RoundLogInput);
     case "size_cut":
-      return round2(calculateSizeCut(input as SizeCutInput));
+      return calculateSizeCut(input as SizeCutInput);
     default:
       throw new Error(`Unknown formula type: ${formulaType}`);
   }
 };
-
-const round2 = (n: number) => Math.round(n * 100) / 100;
